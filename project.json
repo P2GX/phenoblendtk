@@ -1,0 +1,76 @@
+{
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "name": "maxanna",
+  "projectType": "application",
+  "sourceRoot": "src",
+  "prefix": "app",
+  "generators": {
+    "@schematics/angular:component": {
+      "style": "scss"
+    }
+  },
+ "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:application",
+      "options": {
+        "outputPath": "dist/maxanna/browser",
+        "index": "src/index.html",
+        "browser": "src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "tsconfig.app.json",
+        "assets": ["src/favicon.ico", "src/assets"],
+        "styles": ["src/styles.scss", "node_modules/material-icons/iconfont/material-icons.css"],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "3mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "200kb",
+              "maximumError": "250kb"
+            }
+          ],
+          "outputHashing": "all",
+          "optimization": {
+            "scripts": true,
+            "styles": {
+              "minify": true,
+              "inlineCritical": false
+            },
+            "fonts": true
+          },
+          "extractLicenses": true,
+          "sourceMap": false,
+          "baseHref": "./"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "options": {
+        "port": 1420
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "maxanna:build:production"
+        },
+        "development": {
+          "buildTarget": "maxanna:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    }
+  }
+}

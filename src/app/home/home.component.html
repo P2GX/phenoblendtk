@@ -1,0 +1,64 @@
+<div class="home-page">
+    
+    <div class="home-header">
+        <img src="assets/icon.png" alt="Phenoboard Logo" class="home-header__logo" />
+        
+        <div class="home-header__titles">
+            <h1 class="home-header__h1">
+                GA4GH <span class="home-header__h1--accent">MAxAnna</span>
+            </h1>
+            <p class="home-header__subtitle">Biocuration suite for MAxO Annotationss</p>
+        </div>
+
+        <div class="home-header__orcid">
+            <div class="action-with-help">  
+            <button (click)="setBiocuratorOrcid()" 
+                class="orcid-btn">
+                    <mat-icon class="scale-75">account_circle</mat-icon>
+                    {{ biocuratorOrcid() || 'Set ORCID' }}
+            </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="home-card">
+        
+        <div class="home-card__section">
+            <h2 class="home-card__section-label">Ontology Setup</h2>
+            <div class="home-card__row">
+                <div class="action-with-help">
+                    <button (click)="loadHpo()" class="btn-outline-primary home-card__action-btn">
+                    </button>
+                </div>
+                
+                <div class="hpo-status">
+                
+                </div>
+            </div>
+        </div>
+
+        <div class="home-card__section">
+            <h2 class="home-card__section-label">Curation Tools</h2>
+                <div class="tool-row">
+                  <div class="action-with-help">
+                  
+                </div>
+
+                <div class="tool-row">
+                  <div class="action-with-help">
+                    <button 
+                    (click)="chooseJsonTemplateFile()" 
+                  
+                    class="btn-outline-primary home-card__action-btn">
+                        Open Cohort JSON
+                    </button>
+                   
+                    </div> 
+                    <div class="tool-info">
+                        <span class="tool-title">Continue curation</span>
+                        <span class="tool-description">{{ jsonTemplateFileMessage() || 'Select a .json file' }}</span>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div>

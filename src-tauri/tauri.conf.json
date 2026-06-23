@@ -1,19 +1,19 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "maxanna",
-  "version": "0.0.1",
-  "identifier": "org.p2gx.phenoboard",
+  "version": "0.0.2",
+  "identifier": "org.p2gx.maxanna",
   "build": {
-    "beforeDevCommand": "npx nx serve phenoboard --configuration=development  --no-cloud",
+    "beforeDevCommand": "npx nx serve maxanna --configuration=development  --no-cloud",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npx nx build phenoboard --configuration=production  --no-cloud",
-    "frontendDist": "../dist/phenoboard/browser"
+    "beforeBuildCommand": "npx nx build maxanna --configuration=production  --no-cloud",
+    "frontendDist": "../dist/maxanna/browser"
   },
   "app": {
     "windows": [
       {
         "label": "main",
-        "title": "GA4GH Phenoboard",
+        "title": "maxanna",
         "width": 1400,
         "height": 950,
         "resizable": true,
