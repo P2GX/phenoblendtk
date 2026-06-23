@@ -1,0 +1,53 @@
+[package]
+name = "maxanna"
+version = "0.0.1"
+description = "Curate MAxO Annotations"
+authors = ["Peter N Robinson"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "phenoboard_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.2", features = [] }
+
+[dependencies]
+dirs = "6.0"
+html-escape = "0.2.13"
+ontolius = "0.7.4" 
+reqwest = { version = "0.13.3", features = ["json", "blocking"] }
+rfd = { version = "0.16.0", default-features = false}
+fenominal = { git = 'https://github.com/P2GX/fenominal.git',  tag = '0.2.8' , features = ["serde"] }
+#fenominal = { path = '../../fenominal',features = ["serde"] }
+#ga4ghphetools = { git = 'https://github.com/P2GX/ga4ghphetools.git', tag = '0.6.12' }
+ga4ghphetools = { path = "../../ga4ghphetools" }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.148"
+toml = "0.9.8"
+tauri = { version = "2.11.2", features = [] }
+tauri-plugin-dialog = { version = "2", default-features = false }
+tauri-plugin-fs = "2.4.4"
+tauri-plugin-opener = "2.5.2"
+tokio = { version = "1.52.3", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.22"
+regex = "1.12.3"
+
+
+
+[target.'cfg(target_os = "linux")'.dependencies]
+rfd = { version = "0.16.0", default-features = false, features = ["xdg-portal", "tokio"] }
+# rfd buggy with version 0.17.2: package `phenoboard` depends on `rfd` with feature `tokio` but `rfd` does not have that feature.
+
+
+
+
+
+
+
