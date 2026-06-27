@@ -1,6 +1,6 @@
 [package]
 name = "phenoblendtk"
-version = "0.0.5"
+version = "0.0.7"
 description = "Phenoblend Toolkit"
 authors = ["Peter N Robinson"]
 edition = "2021"
@@ -41,6 +41,7 @@ regex = "1.12.3"
 tauri-plugin-shell = "2.3.5"
 oboannotation = "0.2.0"
 thiserror = "2.0.18"
+csv = "1.4.0"
 
 
 

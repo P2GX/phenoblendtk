@@ -17,5 +17,9 @@ export class ConfigService {
     return await invoke("load_hpoas");
   }
 
+  async loadGeneToDisease(): Promise<void> {
+    return await invoke("load_gene_disease_associations");
+  }
+
 
 }

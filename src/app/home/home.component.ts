@@ -52,7 +52,7 @@ export class HomeComponent {
     return "uninitialized";
   });
 
-    maxoMessage = computed(() => {
+    hpoaMessage = computed(() => {
       const cancel = this.cancelMessage();
       const status = this.statusService;
       if (status.hpoaLoaded()) {
@@ -60,12 +60,14 @@ export class HomeComponent {
         const count = status.nHpoaDisease();
         return version && count ? `${version} (${count})` : 'Loaded';
       } else if (status.hpoaLoading()) {
-        return "Loading maxo.json ...";
+        return "Loading phenotype.hpoa ...";
       } else if (cancel) return cancel;
       return "uninitialized";
     });
 
-
+    g2dMessage = computed(() => {
+      return "G2D message (to do)"
+    })
  
   data = "?";
 
@@ -86,46 +88,30 @@ export class HomeComponent {
       } 
     }
 
-      async loadHpoas(): Promise<void> {
+    async loadHpoas(): Promise<void> {
       try {
-        console.log("Load maxo")
         await this.configService.loadHpoas();
       } catch (error: unknown) {
         this.notificationService.showError(
-          `Failed to load MAxO: ${error instanceof Error ? error.message : error}`
+          `Failed to load HPOAs: ${error instanceof Error ? error.message : error}`
         );
       } 
     }
 
-  // select an Excel file with a cohort of phenopackets
-  async chooseExistingTemplateFile(): Promise<void> {
-    try {
-      this.isRunning = true;
-     //  const data = await this.configService.loadPtExcelTemplate(this.updateLabels);
-      this.isRunning = false;
-      if (this.data == null) {
-        const errorMessage = "Could not retrieve template (null error)"
-      //   this.notificationService.showError(errorMessage);
-        return;
-      }
-      this.clearData();
-      this.resetBackend();  
-     //  this.cohortService.setCohortData(data);
-      this.router.navigate(['/pttemplate']);
+     async loadGeneToDisease(): Promise<void> {
+      console.log("loadGeneToDisease")
+      try {
+        await this.configService.loadGeneToDisease();
+        this.notificationService.showSuccess("Loaded gene-to-disease file");
       } catch (error: unknown) {
-        const errorMessage = String(error);
-       //  this.notificationService.showError(errorMessage);
-      }
+        this.notificationService.showError(
+          `Failed to load Gene to Disease file: ${error instanceof Error ? error.message : error}`
+        );
+      } 
     }
 
+  
 
-  /* After loading HPO, we may create a new template (new cohort) */
-  async createNewPhetoolsTemplate(): Promise<void> {
-  //   this.cohortService.clearCohortData();
-    this.resetBackend();
-   //  await this.configService.resetPtTemplate();
-    await this.router.navigate(['/newtemplate']);
-  }
 
 
   setBiocuratorOrcid(): void {
@@ -159,45 +145,7 @@ export class HomeComponent {
     await openUrl(url);
   }
 
-  async chooseJsonTemplateFile(): Promise<void> {
-  
-    try {
-      this.isRunning = true;
-    //   const data = await this.configService.loadPtJson();
-       this.isRunning = false;
-       const data = "?";
-      if (data == null) {
-        const errorMessage = "Could not retrieve JSON template (null error)"
-      //   this.notificationService.showError(errorMessage);
-        return;
-      }
-      this.clearData();
-      this.resetBackend();
-     //  this.cohortService.setCohortData(data);
-      this.router.navigate(['/pttemplate']);
-      } catch (error: unknown) {
-        const errorMessage = String(error);
-      //    this.notificationService.showError(errorMessage);
-      }
-  }
 
-  openExternalTemplate(): void {
-    this.clearData();
-    this.resetBackend();
-    this.router.navigate(['/tableeditor']);
-  }
 
-  /** Clear existing datasets, e.g., when we move to a new template */
-  clearData(): void {
-   //  this.cohortService.clearCohortData();
-  //   this.pmidService.clearAllPmids();
-  //   this.newTemplateMessage = this.NOT_INIT;
-  //   this.jsonTemplateFileMessage.set(this.NOT_INIT);
-  }
-
-  resetBackend(): void {
-   // this.configService.resetPtTemplate();
-   // this.ageService.clearSelectedTerms();
-  }
 
 }

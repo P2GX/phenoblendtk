@@ -1,5 +1,6 @@
 use std::collections::HashSet;
-
+use serde::Deserialize;
+use serde::de::Error;
 use ontolius::TermId;
 
 
@@ -24,4 +25,32 @@ impl SimpleDiseaseModel {
             excluded_hpo_ids
         }
     }
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct GeneDiseaseAssociation {
+    #[serde(rename = "ncbi_gene_id")]
+    pub ncbi_gene_id: String,
+    #[serde(rename = "gene_symbol")]
+    pub gene_symbol: String,
+    #[serde(rename = "association_type")]
+    pub association_type: String,
+    #[serde(rename = "disease_id", deserialize_with = "parse_term_id")]
+    pub disease_id: TermId, 
+    #[serde(rename = "source")]
+    pub source: String,
+}
+
+
+// Custom deserializer helper function if needed:
+fn parse_term_id<'de, D>(deserializer: D) -> Result<TermId, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    let tid: TermId = s.parse().map_err(|e| {
+        D::Error::custom(format!("Failed to parse TermId from string '{}': {}", s, e))
+    })?;
+    Ok(tid) // Or TermId::new(s) depending on your implementation
 }

@@ -1,13 +1,17 @@
 use serde::Serialize;
 use thiserror::Error;
+use tracing::Instrument;
 
 #[derive(Error, Debug)]
 pub enum PhenoblendError {
     #[error("HPOA error: {0}")]
     HpoaError(String),
 
-    #[error("Could not find metadata.")]
-    MetadataError(String), 
+    #[error("Could not find file.")]
+    IoError(String), 
+
+     #[error("Could not parse file.")]
+    ParseError(String), 
 
     #[error("Requested clinical term '{0}' was not found.")]
     NotFound(String),
@@ -25,7 +29,8 @@ impl Serialize for PhenoblendError {
         
         let error_type = match self {
             PhenoblendError::HpoaError(_) => "HpoaError",
-            PhenoblendError::MetadataError(_) => "MetadataError",
+            PhenoblendError::IoError(_) => "Iorror",
+            PhenoblendError::ParseError(_) => "ParseError",
             PhenoblendError::NotFound(_) => "NotFound",
         };
         
@@ -40,7 +45,16 @@ impl PhenoblendError {
         PhenoblendError::HpoaError(format!("Could not load HPOA file at {}", fname.into()))
     }
 
+      pub fn io_error(fname: impl Into<String>) -> Self {
+        PhenoblendError::IoError(format!("Could not load file at {}", fname.into()))
+    }
+
+
     pub fn missing_metadata(msg: impl Into<String>) -> Self {
-        PhenoblendError::MetadataError(msg.into())
+        PhenoblendError::IoError(msg.into())
+    }
+
+    pub fn parse_error(msg: impl Into<String>) -> Self {
+        PhenoblendError::ParseError(msg.into())
     }
 }

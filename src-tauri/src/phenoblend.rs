@@ -4,13 +4,14 @@ use std::{collections::HashMap, sync::Arc};
 use ontolius::{TermId, io::OntologyLoaderBuilder, ontology::{HierarchyWalks, MetadataAware, OntologyTerms, csr::FullCsrOntology}, term::{MinimalTerm}};
 
 use crate::hpoa::disease_model::SimpleDiseaseModel;
-
+use crate::hpoa::disease_model::GeneDiseaseAssociation;
 
 pub struct PhenoblendSingleton {
   // settings: HpoCuratorSettings,
     /// Human Phenotype Ontology
     hpo: Option<Arc<FullCsrOntology>>,
     omim_disease_models:  Option<HashMap<TermId, SimpleDiseaseModel>>,
+    gene_to_disease_d: Option<HashMap<TermId, Vec<GeneDiseaseAssociation>>>,
 }
 
 
@@ -44,7 +45,9 @@ impl PhenoblendSingleton {
     }
     
 
-   
+    pub fn set_gene_to_disease(&mut self, g2d: HashMap<TermId, Vec<GeneDiseaseAssociation>>) {
+        self.gene_to_disease_d = Some(g2d)
+    }
 
 }
 
@@ -54,7 +57,8 @@ impl Default for PhenoblendSingleton {
     fn default() -> Self {
         Self { 
            hpo: None,
-           omim_disease_models: Some(HashMap::default()),
+           omim_disease_models: None,
+           gene_to_disease_d: None
         }
     }
 }

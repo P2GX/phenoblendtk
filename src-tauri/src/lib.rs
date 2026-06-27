@@ -29,7 +29,8 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())     
         .invoke_handler(tauri::generate_handler![
             load_hpo,
-            load_hpoas
+            load_hpoas,
+            load_gene_disease_associations
         ])
         .setup(|app| {
             Ok(())
@@ -104,6 +105,33 @@ async fn load_hpoas(
     });
 
     Ok(())
+}
 
+
+#[tauri::command]
+async fn load_gene_disease_associations(
+    app: AppHandle,
+    state: tauri::State<'_, Arc<AppState>>,
+) -> Result<(), String> {
+ let state_handle = state.inner().clone();
+    let _ = app.emit("g2d-load-event", OntologyLoadEvent::loading());
+    pick_file_and_process(app, "g2d-load-event", move |hpoa_path, app_handle| async move {
+        match crate::hpoa::gene_to_disease::load_gene_disease_associations(&hpoa_path) {
+            Ok(g2d) => {
+                let mut singleton = state_handle.phenoblendtk.lock().unwrap();
+                let n_terms = g2d.len();
+                singleton.set_gene_to_disease(g2d);
+                let _ = app_handle.emit(
+                    "g2d-load-event", 
+                    OntologyLoadEvent::success("gene to disease loaded".to_string(), n_terms)
+                );
+            },
+            Err(_) => { 
+                let _ = app_handle.emit("g2d-load-event", OntologyLoadEvent::cancel());
+            }
+        }
+    });
+
+    Ok(())
 }
 

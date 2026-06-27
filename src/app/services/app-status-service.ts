@@ -27,13 +27,17 @@ export class AppStatusService {
 
   hpoLoaded = signal<boolean>(false);
   hpoaLoaded = signal<boolean>(false);
+  g2dLoaded = signal<boolean>(false);
   hpoVersion = signal<string>('');
   hpoaVersion = signal<string>('');
+  g2dVersion = signal<string>('');
   hpoJsonPath = signal<string>('');
   nHpoTerms = signal<number>(0);
   nHpoaDisease = signal<number>(0);
   hpoLoading = signal<boolean>(false);
   hpoaLoading = signal<boolean>(false);
+  g2dLoading = signal<boolean>(false);
+  nGenes = signal<number>(0);
   biocuratorOrcid = signal<string>('');
 
   // Global Error tracking can be contextualized or kept simple
@@ -66,6 +70,15 @@ export class AppStatusService {
       versionSignal: this.hpoaVersion,
       countSignal: this.nHpoaDisease,
       errorContext: 'HPOA'
+    });
+
+    await this.registerOntologyListener({
+      channel: 'g2d-load-event',
+      loadingSignal: this.g2dLoading,
+      loadedSignal: this.g2dLoaded,
+      versionSignal: this.g2dVersion,
+      countSignal: this.nGenes,
+      errorContext: 'gene-to-disease'
     });
   }
 
