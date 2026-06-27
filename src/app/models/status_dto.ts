@@ -25,3 +25,9 @@ export function defaultStatusDto(): StatusDto {
         errorMessage: ""
     };
 }
+
+
+interface TauriError {
+  type: string;
+  message: string;
+}

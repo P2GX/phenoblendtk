@@ -1,13 +1,13 @@
 <div class="home-page">
     
     <div class="home-header">
-        <img src="assets/icon.png" alt="MAxAnna Logo" class="home-header__logo" />
+        <img src="assets/icon.png" alt="PhenoblendTK Logo" class="home-header__logo" />
         
         <div class="home-header__titles">
             <h1 class="home-header__h1">
-                <span class="home-header__h1--accent">MAxAnna</span>
+                <span class="home-header__h1--accent">Phenoblend Toolkit</span>
             </h1>
-            <p class="home-header__subtitle">Biocuration suite for MAxO Annotations</p>
+            <p class="home-header__subtitle">Visualize phenotype blending with multiple genetic diagnosis</p>
         </div>
 
         <div class="home-header__orcid">
@@ -38,16 +38,16 @@
         </div>
 
          <div class="home-card__section">
-            <h2 class="home-card__section-label">MAxO Setup</h2>
+            <h2 class="home-card__section-label">HPOAs Setup</h2>
             <ui-load-ontology
-                label="MAxO"
-                [isLoading]="statusService.maxoLoading()"
-                [isLoaded]="statusService.maxoLoaded()"
+                label="HPOA"
+                [isLoading]="statusService.hpoaLoading()"
+                [isLoaded]="statusService.hpoaLoaded()"
                 [statusMessage]="maxoMessage()"
-                [termCount]="statusService.nMaxoTerms()"
+                [termCount]="statusService.nHpoaDisease()"
                 helpUrl="https://p2gx.github.io/phenoboard/help/start.html#load-the-hpo"
-                [helpLines]="['Select the local maxo.json file from your machine.']"
-                (onLoad)="loadMaxo()">
+                [helpLines]="['Select the local phenotype.hpoa file from your machine.']"
+                (onLoad)="loadHpoas()">
             </ui-load-ontology>
         </div>
 

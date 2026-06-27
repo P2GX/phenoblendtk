@@ -55,11 +55,11 @@ export class HomeComponent {
     maxoMessage = computed(() => {
       const cancel = this.cancelMessage();
       const status = this.statusService;
-      if (status.maxoLoaded()) {
-        const version = status.maxoVersion();
-        const count = status.nMaxoTerms();
+      if (status.hpoaLoaded()) {
+        const version = status.hpoaVersion();
+        const count = status.nHpoaDisease();
         return version && count ? `${version} (${count})` : 'Loaded';
-      } else if (status.maxoLoading()) {
+      } else if (status.hpoaLoading()) {
         return "Loading maxo.json ...";
       } else if (cancel) return cancel;
       return "uninitialized";
@@ -86,10 +86,10 @@ export class HomeComponent {
       } 
     }
 
-      async loadMaxo(): Promise<void> {
+      async loadHpoas(): Promise<void> {
       try {
         console.log("Load maxo")
-        await this.configService.loadMAxO();
+        await this.configService.loadHpoas();
       } catch (error: unknown) {
         this.notificationService.showError(
           `Failed to load MAxO: ${error instanceof Error ? error.message : error}`

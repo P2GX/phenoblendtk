@@ -1,24 +1,26 @@
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use ontolius::{TermId, io::OntologyLoaderBuilder, ontology::{HierarchyWalks, MetadataAware, OntologyTerms, csr::FullCsrOntology}, term::{MinimalTerm}};
 
+use crate::hpoa::disease_model::SimpleDiseaseModel;
 
-pub struct MaxAnnaSingleton {
+
+pub struct PhenoblendSingleton {
   // settings: HpoCuratorSettings,
     /// Human Phenotype Ontology
     hpo: Option<Arc<FullCsrOntology>>,
-    maxo:  Option<Arc<FullCsrOntology>>,
+    omim_disease_models:  Option<HashMap<TermId, SimpleDiseaseModel>>,
 }
 
 
-impl MaxAnnaSingleton {
+impl PhenoblendSingleton {
     /// Create a new instance of PhenoboardSingleton
     /// 
     /// The constructor will try to load the HPO from the settings file if available;
     /// if something does not work, it will leave the ontology field as None
     pub fn new() -> Self {
-        let mut singleton = MaxAnnaSingleton::default();
+        let mut singleton = PhenoblendSingleton::default();
         return singleton;
     }
 
@@ -37,28 +39,22 @@ impl MaxAnnaSingleton {
 
 
 
-    pub fn set_maxo(&mut self, ontology: Arc<FullCsrOntology>, maxo_json_path: &str) {
-        self.maxo = Some(ontology.clone());
-       // self.autocompleter = Some(AutoCompleter::new(ontology.clone()));
-        //let _ = self.settings.set_hp_json_path(hpo_json_path);
+    pub fn set_hpoa_d(&mut self, hpoa_d: HashMap<TermId, SimpleDiseaseModel>) {
+        self.omim_disease_models = Some(hpoa_d);
     }
+    
 
-    pub fn get_maxo(&self) -> Option<Arc<FullCsrOntology>> {
-        match &self.maxo {
-            Some(maxo) => Some(maxo.clone()),
-            None => None,
-        }
-    }
+   
 
 }
 
 
 
-impl Default for MaxAnnaSingleton {
+impl Default for PhenoblendSingleton {
     fn default() -> Self {
         Self { 
            hpo: None,
-           maxo: None,
+           omim_disease_models: Some(HashMap::default()),
         }
     }
 }

@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/nx/schemas/project-schema.json",
-  "name": "maxanna",
+  "name": "phenoblendtk",
   "projectType": "application",
   "sourceRoot": "src",
   "prefix": "app",
@@ -13,7 +13,7 @@
     "build": {
       "executor": "@angular-devkit/build-angular:application",
       "options": {
-        "outputPath": "dist/maxanna/browser",
+        "outputPath": "dist/phenoblendtk/browser",
         "index": "src/index.html",
         "browser": "src/main.ts",
         "polyfills": ["zone.js"],
@@ -64,10 +64,10 @@
       },
       "configurations": {
         "production": {
-          "buildTarget": "maxanna:build:production"
+          "buildTarget": "phenoblendtk:build:production"
         },
         "development": {
-          "buildTarget": "maxanna:build:development"
+          "buildTarget": "phenoblendtk:build:development"
         }
       },
       "defaultConfiguration": "development"

@@ -1,10 +1,10 @@
 {
-  "name": "maxanna",
-  "version": "0.0.5",
+  "name": "phenoblendtk",
+  "version": "0.0.6",
   "scripts": {
     "ng": "ng",
-    "start": "nx serve maxanna --port 1420",
-    "build": "nx build maxanna --base-href ./",
+    "start": "nx serve phenoblendtk --port 1420",
+    "build": "nx build phenoblendtk --base-href ./",
     "watch": "nx build --watch --configuration development",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
@@ -49,9 +49,11 @@
     "@angular-devkit/build-angular": "^22.0.2",
     "@angular-devkit/core": "^22.0.2",
     "@angular-devkit/schematics": "^22.0.2",
+    "@angular-eslint/builder": "^22.0.0",
     "@angular-eslint/eslint-plugin": "^21.4.0",
-    "@angular-eslint/eslint-plugin-template": "^21.3.1",
-    "@angular-eslint/template-parser": "21.3.1",
+    "@angular-eslint/eslint-plugin-template": "^22.0.0",
+    "@angular-eslint/schematics": "^22.0.0",
+    "@angular-eslint/template-parser": "^22.0.0",
     "@angular/cli": "^22.0.2",
     "@angular/compiler-cli": "^22.0.2",
     "@eslint/js": "^9.39.2",
@@ -62,7 +64,7 @@
     "@types/jasmine": "~5.1.0",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.51.0",
-    "angular-eslint": "^21.3.1",
+    "angular-eslint": "^22.0.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -84,5 +86,18 @@
     "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "6.0.2",
     "typescript-eslint": "^8.60.1"
+  },"overrides": {
+    "@module-federation/dts-plugin": {
+      "typescript": "$typescript"
+    },
+    "@module-federation/enhanced": {
+      "typescript": "$typescript"
+    },
+    "@module-federation/rspack": {
+      "typescript": "$typescript"
+    },
+    "@nx/angular": {
+      "@angular-devkit/build-angular": "$@angular-devkit/build-angular"
+    }
   }
 }

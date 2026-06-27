@@ -1,5 +1,6 @@
-pub mod maxanna;
-
+pub mod phenoblend;
+pub mod errors;
+mod hpoa;
 
 
 use ontolius::ontology::OntologyTerms;
@@ -8,16 +9,16 @@ use tauri_plugin_dialog::{DialogExt};
 use std::{collections::HashMap, fs, sync::{Arc, Mutex}};
 use tauri_plugin_fs::{init};
 use ga4ghphetools::tauri::{pick_file_and_process, load_ontology, OntologyLoadEvent};
-use crate::maxanna::MaxAnnaSingleton;
+use crate::{hpoa::disease_model, phenoblend::PhenoblendSingleton};
 
 struct AppState {
-    maxanna: Mutex<MaxAnnaSingleton>,
+    phenoblendtk: Mutex<PhenoblendSingleton>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app_state = Arc::new(AppState {
-        maxanna: Mutex::new(MaxAnnaSingleton::new()),
+        phenoblendtk: Mutex::new(PhenoblendSingleton::new()),
     });
 
     tauri::Builder::default()
@@ -28,7 +29,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())     
         .invoke_handler(tauri::generate_handler![
             load_hpo,
-            load_maxo
+            load_hpoas
         ])
         .setup(|app| {
             Ok(())
@@ -60,7 +61,7 @@ async fn load_hpo(
     pick_file_and_process(app, "hpo-load-event", move |hpo_json_path, app_handle| async move {
         match load_ontology(&hpo_json_path) {
             Ok(ontology) => {
-                let mut singleton = state_handle.maxanna.lock().unwrap();
+                let mut singleton = state_handle.phenoblendtk.lock().unwrap();
                 let n_terms = ontology.len();
                 singleton.set_hpo(ontology, &hpo_json_path);
                 let _ = app_handle.emit(
@@ -78,31 +79,31 @@ async fn load_hpo(
 }
 
 
-
-/// Load the Medical Action Ontology (MAxO)
 #[tauri::command]
-async fn load_maxo(
+async fn load_hpoas(
     app: AppHandle,
     state: tauri::State<'_, Arc<AppState>>,
 ) -> Result<(), String> {
-    let state_handle = state.inner().clone();
+ let state_handle = state.inner().clone();
     let _ = app.emit("maxo-load-event", OntologyLoadEvent::loading());
-    pick_file_and_process(app, "maxo-load-event", move |maxo_json_path, app_handle| async move {
-        match load_ontology(&maxo_json_path) {
-            Ok(ontology) => {
-                let mut singleton = state_handle.maxanna.lock().unwrap();
-                let n_terms = ontology.len();
-                singleton.set_maxo(ontology, &maxo_json_path);
+    pick_file_and_process(app, "hpoa-load-event", move |hpoa_path, app_handle| async move {
+        match crate::hpoa::hpoa_ingest::load_hpoa_d(&hpoa_path) {
+            Ok(disease_model_map) => {
+                let mut singleton = state_handle.phenoblendtk.lock().unwrap();
+                let n_terms = disease_model_map.len();
+                singleton.set_hpoa_d(disease_model_map);
                 let _ = app_handle.emit(
-                    "maxo-load-event", 
-                    OntologyLoadEvent::success("MAxO loaded".to_string(), n_terms)
+                    "hpoa-load-event", 
+                    OntologyLoadEvent::success("HPOAs loaded".to_string(), n_terms)
                 );
             },
             Err(_) => { 
-                let _ = app_handle.emit("maxo-load-event", OntologyLoadEvent::cancel());
+                let _ = app_handle.emit("hpoa-load-event", OntologyLoadEvent::cancel());
             }
         }
     });
 
     Ok(())
+
 }
+

@@ -1,19 +1,19 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "maxanna",
-  "version": "0.0.5",
-  "identifier": "org.p2gx.maxanna",
+  "productName": "phenoblendtk",
+  "version": "0.0.6",
+  "identifier": "org.p2gx.phenoblendtk",
   "build": {
-    "beforeDevCommand": "npx nx serve maxanna --configuration=development  --no-cloud",
+    "beforeDevCommand": "npx nx serve phenoblendtk --configuration=development  --no-cloud",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npx nx build maxanna --configuration=production  --no-cloud",
-    "frontendDist": "../dist/maxanna/browser"
+    "beforeBuildCommand": "npx nx build phenoblendtk --configuration=production  --no-cloud",
+    "frontendDist": "../dist/phenoblendtk/browser"
   },
   "app": {
     "windows": [
       {
         "label": "main",
-        "title": "maxanna",
+        "title": "phenoblendtk",
         "width": 1400,
         "height": 950,
         "resizable": true,

@@ -22,7 +22,7 @@ export class AppComponent {
 
 
   handleHelpNavigation() {
-    this.handleExternalNavigation("https://github.com/P2GX/maxanna");
+    this.handleExternalNavigation("https://github.com/P2GX/phenoblendtk");
   }
 
 

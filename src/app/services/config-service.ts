@@ -13,8 +13,8 @@ export class ConfigService {
     return await invoke("load_hpo");
   }
 
-    async loadMAxO(): Promise<void> {
-    return await invoke("load_maxo");
+  async loadHpoas(): Promise<void> {
+    return await invoke("load_hpoas");
   }
 
 

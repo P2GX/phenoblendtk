@@ -26,14 +26,14 @@ export class AppStatusService {
   private notificationService = inject(NotificationService);
 
   hpoLoaded = signal<boolean>(false);
-  maxoLoaded = signal<boolean>(false);
+  hpoaLoaded = signal<boolean>(false);
   hpoVersion = signal<string>('');
-  maxoVersion = signal<string>('');
+  hpoaVersion = signal<string>('');
   hpoJsonPath = signal<string>('');
   nHpoTerms = signal<number>(0);
-  nMaxoTerms = signal<number>(0);
+  nHpoaDisease = signal<number>(0);
   hpoLoading = signal<boolean>(false);
-  maxoLoading = signal<boolean>(false);
+  hpoaLoading = signal<boolean>(false);
   biocuratorOrcid = signal<string>('');
 
   // Global Error tracking can be contextualized or kept simple
@@ -58,14 +58,14 @@ export class AppStatusService {
       errorContext: 'HPO'
     });
 
-    // Bind the MAXO Stream 
+    // Bind the HPOA Stream 
     await this.registerOntologyListener({
-      channel: 'maxo-load-event',
-      loadingSignal: this.maxoLoading,
-      loadedSignal: this.maxoLoaded,
-      versionSignal: this.maxoVersion,
-      countSignal: this.nMaxoTerms,
-      errorContext: 'MAXO'
+      channel: 'hpoa-load-event',
+      loadingSignal: this.hpoaLoading,
+      loadedSignal: this.hpoaLoaded,
+      versionSignal: this.hpoaVersion,
+      countSignal: this.nHpoaDisease,
+      errorContext: 'HPOA'
     });
   }
 

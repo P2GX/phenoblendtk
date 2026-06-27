@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    maxanna_lib::run()
+    phenoblendtk_lib::run()
 }
