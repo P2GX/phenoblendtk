@@ -1,6 +1,8 @@
 pub mod phenoblend;
 pub mod errors;
 mod hpoa;
+mod hpo;
+mod model;
 
 
 use ontolius::ontology::OntologyTerms;
@@ -9,6 +11,8 @@ use tauri_plugin_dialog::{DialogExt};
 use std::{collections::HashMap, fs, sync::{Arc, Mutex}};
 use tauri_plugin_fs::{init};
 use ga4ghphetools::tauri::{pick_file_and_process, load_ontology, OntologyLoadEvent};
+use phenopackets::schema::v2::Phenopacket;
+
 use crate::{hpoa::disease_model, phenoblend::PhenoblendSingleton};
 
 struct AppState {
@@ -28,6 +32,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())     
         .invoke_handler(tauri::generate_handler![
+            ingest_phenopacket,
             load_hpo,
             load_hpoas,
             load_gene_disease_associations
@@ -48,9 +53,33 @@ pub fn run() {
 
 
 
+#[tauri::command]
+fn ingest_phenopacket(
+    app: AppHandle,
+    state: tauri::State<'_, Arc<AppState>>,
+    payload: String
+) -> Result<(), String> {
+    let state_handle = state.inner().clone();
+    let mut singleton = state_handle.phenoblendtk.lock().unwrap();
+    let _ = app.emit("ppkt-load-event", OntologyLoadEvent::loading());
+    let mut json_value: serde_json::Value = serde_json::from_str(&payload)
+        .map_err(|e| format!("Invalid JSON syntax structure: {}", e))?;
+    // 2. Safely inject the missing field into the vitalStatus block if it exists
+    if let Some(subject) = json_value.get_mut("subject") {
+        if let Some(vital_status) = subject.get_mut("vitalStatus") {
+            if vital_status.get("survivalTimeInDays").is_none() {
+                // Insert a fallback integer value to satisfy the strict parser
+                vital_status["survivalTimeInDays"] = serde_json::Value::from(0);
+            }
+        }
+    }
 
-
-
+    // 3. Now convert the sanitized JSON value into the official Phenopacket type
+    let phenopacket: Phenopacket = serde_json::from_value(json_value)
+        .map_err(|e| format!("Phenopacket Schema validation error: {}", e))?;
+    singleton.ingest_ppkt(phenopacket)?;
+    Ok(())
+}
 /// Load the Human Phenotype Ontology (HPO)
 #[tauri::command]
 async fn load_hpo(

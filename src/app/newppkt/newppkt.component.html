@@ -1,0 +1,31 @@
+<div class="new-case-container">
+  <header class="workspace-header">
+    <h1>Load a GA4GH phenopacket</h1>
+    <p>The phenopacket should contain data about an individual with a multiple-genetic diagnosis.</p>
+  </header>
+
+  <div class="workspace-body">
+    <lib-phenopacket-loader 
+      [onIngest]="processPhenopacketIngest">
+    </lib-phenopacket-loader>
+
+    @if (isProcessing()) {
+      <div class="status-indicator processing">
+        <span class="spinner">⏳</span> {{ statusMessage() }}
+      </div>
+    }
+
+    @if (activeCaseId(); as id) {
+      <div class="status-indicator success">
+        <p>✅ <strong>Active Case Target loaded successfully:</strong> <code>{{ id }}</code></p>
+      </div>
+    }
+
+    @if (errorDetails(); as err) {
+      <div class="status-indicator failure">
+        <p>❌ <strong>Backend Deserialization Exception:</strong></p>
+        <pre><code>{{ err }}</code></pre>
+      </div>
+    }
+  </div>
+</div>

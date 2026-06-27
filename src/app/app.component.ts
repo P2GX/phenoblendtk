@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NavbarComponent } from './navbar/navbar.component';
 import { FooterComponent } from 'ng-hpo-uikit';
 import { RouterOutlet } from '@angular/router';
 import { open as openExternalBrowser } from '@tauri-apps/plugin-shell';
@@ -11,15 +12,12 @@ import { open as openExternalBrowser } from '@tauri-apps/plugin-shell';
   styleUrls: ['./app.component.css', '../styles.scss'],
   imports: [
     FooterComponent,
+    NavbarComponent,
     RouterOutlet,
 
 ]
 })
 export class AppComponent {
-
-
-
-
 
   handleHelpNavigation() {
     this.handleExternalNavigation("https://github.com/P2GX/phenoblendtk");

@@ -1,18 +1,12 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
+import { NewPpktComponent } from './newppkt/newppkt.component';
 
 export const appRoutes: Routes = [
-  // This is your new "First Page"
+  { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent },
+  { path: 'newppkt', component: NewPpktComponent },
   
-  // Clean fallbacks that route straight to your new home page
-  { path: '', redirectTo: '/home', pathMatch: 'full' },
-  { path: '**', redirectTo: '/home' } 
+  // The wildcard safety net stays at the bottom
+  { path: '**', redirectTo: 'home' },
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(appRoutes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule {}

@@ -1653,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "ga4ghphetools"
-version = "0.6.15"
+version = "0.6.17"
 dependencies = [
  "calamine",
  "chrono",
@@ -3462,7 +3462,7 @@ dependencies = [
 
 [[package]]
 name = "phenoblendtk"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "csv",
  "dirs",
@@ -3471,6 +3471,7 @@ dependencies = [
  "html-escape",
  "oboannotation",
  "ontolius",
+ "phenopackets",
  "regex",
  "reqwest",
  "rfd",

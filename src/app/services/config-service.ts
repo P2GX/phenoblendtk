@@ -21,5 +21,9 @@ export class ConfigService {
     return await invoke("load_gene_disease_associations");
   }
 
+  async ingestPhenopacket(ppkt: string): Promise<void> {
+    return await invoke("ingest_phenopacket", {'ppkt': ppkt});
+  }
+
 
 }

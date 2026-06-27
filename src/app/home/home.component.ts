@@ -20,7 +20,8 @@ import { ConfigService } from '../services/config-service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, MatProgressBarModule, FormsModule, LoadOntologyComponent,  MatCheckboxModule, MatIcon, MatProgressSpinnerModule],
+  imports: [CommonModule, MatProgressBarModule, FormsModule, LoadOntologyComponent, 
+    MatCheckboxModule, MatIcon, MatProgressSpinnerModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })

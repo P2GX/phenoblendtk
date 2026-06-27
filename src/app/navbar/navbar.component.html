@@ -1,0 +1,13 @@
+<nav class="app-nav">
+  @for (tab of tabs; track tab.path) {
+    <a
+      [routerLink]="tab.path"
+      routerLinkActive="nav-link--active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="nav-link"
+      (click)="logClick(tab.path)"
+    >
+      {{ tab.label }}
+    </a>
+  }
+</nav>
