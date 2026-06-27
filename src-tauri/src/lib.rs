@@ -3,17 +3,16 @@ pub mod errors;
 mod hpoa;
 mod hpo;
 mod model;
+mod blend;
 
 
 use ontolius::ontology::OntologyTerms;
 use tauri::{AppHandle, Emitter, Runtime, WindowEvent};
-use tauri_plugin_dialog::{DialogExt};
-use std::{collections::HashMap, fs, sync::{Arc, Mutex}};
-use tauri_plugin_fs::{init};
+use std::sync::{Arc, Mutex};
 use ga4ghphetools::tauri::{pick_file_and_process, load_ontology, OntologyLoadEvent};
 use phenopackets::schema::v2::Phenopacket;
 
-use crate::{hpoa::disease_model, phenoblend::PhenoblendSingleton};
+use crate::{blend::dto::PresenceMatrixPayload, phenoblend::PhenoblendSingleton};
 
 struct AppState {
     phenoblendtk: Mutex<PhenoblendSingleton>,
@@ -32,6 +31,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())     
         .invoke_handler(tauri::generate_handler![
+            get_presence_matrix,
             ingest_phenopacket,
             load_hpo,
             load_hpoas,
@@ -164,3 +164,12 @@ async fn load_gene_disease_associations(
     Ok(())
 }
 
+#[tauri::command]
+async fn get_presence_matrix(
+    app: AppHandle,
+    state: tauri::State<'_, Arc<AppState>>,
+) -> Result<PresenceMatrixPayload, String> {
+    let state_handle = state.inner().clone();
+    let mut singleton = state_handle.phenoblendtk.lock().unwrap();
+    singleton.calculate_presence_matrix()
+}

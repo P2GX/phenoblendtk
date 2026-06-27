@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 use serde::Deserialize;
 use serde::de::Error;
-use ontolius::TermId;
+use ontolius::{Identified, TermId};
 
 
 
 pub struct SimpleDiseaseModel {
-    omim_disease_id: TermId,
-    omim_disease_name: String,
-    observed_hpo_ids: HashSet<TermId>,
+    pub omim_disease_id: TermId,
+    pub omim_disease_name: String,
+    pub observed_hpo_ids: HashSet<TermId>,
     excluded_hpo_ids: HashSet<TermId>
 }
 
@@ -24,6 +24,10 @@ impl SimpleDiseaseModel {
             observed_hpo_ids,
             excluded_hpo_ids
         }
+    }
+
+    pub fn omim_id(&self) -> String {
+        self.omim_disease_id.identifier().to_string()
     }
 }
 

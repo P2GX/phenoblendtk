@@ -1,6 +1,6 @@
 {
   "name": "phenoblendtk",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "scripts": {
     "ng": "ng",
     "start": "nx serve phenoblendtk --port 1420",
@@ -37,6 +37,7 @@
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@tauri-apps/plugin-opener": "^2.5.3",
     "@tauri-apps/plugin-shell": "^2.3.5",
+    "d3": "^7.9.0",
     "material-icons": "^1.13.14",
     "ng-hpo-uikit": "github:P2GX/ng-hpo-uikit#dist-build",
     "rxjs": "~7.8.0",
@@ -61,6 +62,7 @@
     "@nx/workspace": "22.6.5",
     "@schematics/angular": "^22.0.2",
     "@tauri-apps/cli": "^2.3.1",
+    "@types/d3": "^7.4.3",
     "@types/jasmine": "~5.1.0",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.51.0",
@@ -86,7 +88,8 @@
     "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "6.0.2",
     "typescript-eslint": "^8.60.1"
-  },"overrides": {
+  },
+  "overrides": {
     "@module-federation/dts-plugin": {
       "typescript": "$typescript"
     },

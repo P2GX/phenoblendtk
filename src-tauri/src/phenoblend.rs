@@ -1,11 +1,11 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use ontolius::{TermId, io::OntologyLoaderBuilder, ontology::{HierarchyWalks, MetadataAware, OntologyTerms, csr::FullCsrOntology}, term::{MinimalTerm, simple::SimpleTerm}};
-use phenopackets::schema::{v1::Interpretation, v2::Phenopacket};
+use ontolius::{TermId,  ontology::csr::FullCsrOntology};
+use phenopackets::schema::v2::Phenopacket;
 
 
-use crate::{hpoa::disease_model::SimpleDiseaseModel, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
+use crate::{blend::dto::PresenceMatrixPayload, hpoa::disease_model::SimpleDiseaseModel, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
 
 pub struct PhenoblendSingleton {
@@ -13,7 +13,8 @@ pub struct PhenoblendSingleton {
     individual: Proband,
     hpo: Option<Arc<FullCsrOntology>>,
     omim_disease_models:  Option<HashMap<TermId, SimpleDiseaseModel>>,
-    gene_to_disease_d: Option<HashMap<TermId, Vec<GeneDiseaseAssociation>>>,
+    gene_to_disease_d: Option<HashMap<String, Vec<GeneDiseaseAssociation>>>,
+    disease_count_d: HashMap<TermId, usize>,
 }
 
 
@@ -39,10 +40,11 @@ impl PhenoblendSingleton {
 
     pub fn set_hpoa_d(&mut self, hpoa_d: HashMap<TermId, SimpleDiseaseModel>) {
         self.omim_disease_models = Some(hpoa_d);
+        self.calculate_disease_counts();
     }
     
 
-    pub fn set_gene_to_disease(&mut self, g2d: HashMap<TermId, Vec<GeneDiseaseAssociation>>) {
+    pub fn set_gene_to_disease(&mut self, g2d: HashMap<String, Vec<GeneDiseaseAssociation>>) {
         self.gene_to_disease_d = Some(g2d)
     }
 
@@ -86,6 +88,41 @@ impl PhenoblendSingleton {
         Ok(())
     }
 
+    pub fn calculate_presence_matrix(&mut self) -> Result<PresenceMatrixPayload, String> {
+        let hpo = self.hpo.as_ref()
+            .ok_or_else(|| "Missing required resource: HPO Ontology".to_string())?;
+        let omim = self.omim_disease_models.as_ref()
+            .ok_or_else(|| "Missing required resource: OMIM Disease Models".to_string())?;
+        let gene_to_disease = self.gene_to_disease_d.as_ref()
+            .ok_or_else(|| "Missing required resource: Gene-to-Disease Associations".to_string())?;
+        let proband = self.individual.clone();
+        
+        crate::blend::presence_matrix::calculate_presence_matrix(hpo.clone(), omim, gene_to_disease, &self.disease_count_d, proband)
+    }
+
+        pub fn calculate_disease_counts(&mut self) -> Result<(), String>{
+            let mut disease_counts: HashMap<TermId, usize> = HashMap::new();
+            if let Some(models) = &self.omim_disease_models {
+                for model in models.values() {
+                    for hpo_id in &model.observed_hpo_ids {
+                        *disease_counts.entry(hpo_id.clone()).or_insert(0) += 1;
+                    }
+                }
+            }
+            self.disease_count_d = disease_counts;
+            Ok(())
+        }
+        
+
+
+    pub fn disease_count(&self, term_id: &TermId) -> usize {
+        self.disease_count_d
+            .get(term_id)
+            .copied()
+            .unwrap_or(0)
+    }
+
+
 }
 
 
@@ -96,7 +133,8 @@ impl Default for PhenoblendSingleton {
             individual: Proband::default(),
             hpo: None,
             omim_disease_models: None,
-            gene_to_disease_d: None
+            gene_to_disease_d: None,
+            disease_count_d: HashMap::new(),
         }
     }
 }
