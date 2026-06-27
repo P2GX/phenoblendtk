@@ -1,0 +1,25 @@
+{
+  "name": "ng-hpo-uikit",
+  "version": "0.0.3",
+  "peerDependencies": {
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0",
+    "@angular/material": "^22.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false,
+  "module": "fesm2022/ng-hpo-uikit.mjs",
+  "typings": "types/ng-hpo-uikit.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./types/ng-hpo-uikit.d.ts",
+      "default": "./fesm2022/ng-hpo-uikit.mjs"
+    }
+  },
+  "type": "module"
+}
