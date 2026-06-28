@@ -29,7 +29,7 @@ export class NewPpktComponent {
     this.isProcessing.set(true);
     this.statusMessage.set('Parsing phenopacket payload in Rust engine...');
     this.errorDetails.set(null);
-
+    console.log("processPhenopacketIngest - payload", payload);
     try { 
       this.configService.ingestPhenopacket(payload);
       this.notificationService.showSuccess('Phenopacket ingested successfully.'); 

@@ -39,3 +39,10 @@ pub struct PresenceMatrixPayload {
     /// Ordered rows following phenotype grouping tiers
     pub columns: Vec<PresenceMatrixItem>,
 }
+
+
+impl PresenceMatrixPayload {
+    pub fn n_columns(&self) -> usize {
+        self.columns.len()
+    }
+}

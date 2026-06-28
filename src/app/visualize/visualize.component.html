@@ -1,1 +1,56 @@
-<h1>Visualize</h1>
+ <div class="visualizer-card">
+      <div class="action-bar">
+        <div class="title-group">
+          <h2>{{ currentTitle() }}</h2>
+          <p class="subtitle">HPO Term annotations mapped across selected genotypes</p>
+        </div>
+
+        <div class="view-selector">
+          <label for="vis-type">Visualization View: </label>
+          <select id="vis-type" class="select-dropdown" [value]="activeView()" (change)="onViewChange($event)">
+            <option value="matrix">Presence Matrix</option>
+            <option value="network">Phenotypic Network</option>
+            <option value="bar">Distribution Bar Chart</option>
+          </select>
+        </div>
+        
+        <div class="button-group">
+          <button class="btn btn-secondary" (click)="reloadMatrixData()" [disabled]="isLoading()">
+            🔄 Refresh Data
+          </button>
+          <button class="btn btn-primary" (click)="exportMatrixToSvg()" [disabled]="isLoading() || !matrixData() || activeView() !== 'matrix'">
+            📤 Export SVG Vector
+          </button>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <p>Computing visualization layouts in Rust engine...</p>
+        </div>
+      } @else if (matrixData(); as data) {
+        
+        @switch (activeView()) {
+          @case ('matrix') {
+            <app-presence-matrix #matrixComponent [data]="data"></app-presence-matrix>
+          }
+          @case ('network') {
+            <div class="placeholder-view">
+              <p>🌐 [D3 Network Graph Component Goes Here]</p>
+            </div>
+          }
+          @case ('bar') {
+            <div class="placeholder-view">
+              <p>📊 [D3 Distribution Bar Chart Component Goes Here]</p>
+            </div>
+          }
+        }
+
+      } @else {
+        <div class="empty-state">
+          <p>No active case data loaded to visualize.</p>
+        </div>
+      }
+    </div>

@@ -1,6 +1,6 @@
 [package]
 name = "phenoblendtk"
-version = "0.0.9"
+version = "0.1.1"
 description = "Phenoblend Toolkit"
 authors = ["Peter N Robinson"]
 edition = "2021"

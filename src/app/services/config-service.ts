@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { invoke } from "@tauri-apps/api/core";
 import { StatusDto } from '../models/status_dto';
 import { ask } from '@tauri-apps/plugin-dialog';
+import { PresenceMatrixPayload } from '../models/viz_dto';
 
 @Injectable({
   providedIn: 'root'
@@ -23,6 +24,10 @@ export class ConfigService {
 
   async ingestPhenopacket(ppkt: string): Promise<void> {
     return await invoke("ingest_phenopacket", {'ppkt': ppkt});
+  }
+
+  async getPresenceMatrix(): Promise<PresenceMatrixPayload> {
+    return await invoke("get_presence_matrix");
   }
 
 

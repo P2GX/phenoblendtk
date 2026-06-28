@@ -7,7 +7,7 @@ use oboannotation::hpo::io::{HpoAnnotationLines, HpoAnnotationLoader};
 use ontolius::TermId;
 use ontolius::term::MinimalTerm;
 
-use crate::errors::PhenoblendError;
+use crate::util::errors::PhenoblendError;
 use crate::hpoa::disease_model::SimpleDiseaseModel;
 
 

@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use crate::errors::PhenoblendError;
+use crate::util::errors::PhenoblendError;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
 
 
-
+static OMIM_PREFIX: &str = "OMIM";
 
 pub fn load_gene_disease_associations<P: AsRef<Path>>(
     fpath: P,
@@ -26,6 +26,9 @@ pub fn load_gene_disease_associations<P: AsRef<Path>>(
         let record = result.map_err(|e| {
             PhenoblendError::parse_error(format!("TSV deserialization failed: {}", e))
         })?;
+        if record.disease_id.prefix() != *OMIM_PREFIX {
+            continue; // Omit ORPHA and DECIPER
+        }
 
         // Use the entry API with a clone of the key to position the record in the vector
         association_map

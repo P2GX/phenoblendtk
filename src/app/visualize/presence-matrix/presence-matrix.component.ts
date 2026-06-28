@@ -2,17 +2,9 @@
 import { Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild, signal } from '@angular/core';
 import { DecimalPipe} from '@angular/common'
 import * as d3 from 'd3';
+import { PresenceMatrixPayload } from '../../models/viz_dto';
 
-export interface PresenceMatrixRow {
-  hpoId: string;
-  hpoName: string;
-  scores: { [geneSymbol: string]: number };
-}
 
-export interface PresenceMatrixPayload {
-  genes: string[];
-  rows: PresenceMatrixRow[];
-}
 
 @Component({
   selector: 'app-presence-matrix',
@@ -71,14 +63,14 @@ export class PresenceMatrixComponent implements OnChanges {
     const container = this.chartContainer.nativeElement;
     container.innerHTML = '';
 
-    const genes = this.data.genes;
-    const rows = this.data.rows;
+    const genes = this.data.entities;
+    const cols = this.data.columns;
 
     // Configurable scaling step bounds (similar to your 0.5 inches space calculations)
     const cellSize = 30;
     const margin = { top: 120, right: 100, bottom: 40, left: 180 };
 
-    const width = (rows.length * cellSize) + margin.left + margin.right;
+    const width = (cols.length * cellSize) + margin.left + margin.right;
     const height = (genes.length * cellSize) + margin.top + margin.bottom;
 
     // 1. Initialize the root SVG canvas viewport
@@ -92,8 +84,8 @@ export class PresenceMatrixComponent implements OnChanges {
 
     // 2. Set up discrete positional linear scales
     const xScale = d3.scaleBand()
-      .domain(rows.map(r => r.hpoId))
-      .range([0, rows.length * cellSize])
+      .domain(cols.map(r => r.hpoId))
+      .range([0, cols.length * cellSize])
       .padding(0.05);
 
     const yScale = d3.scaleBand()
@@ -113,7 +105,7 @@ export class PresenceMatrixComponent implements OnChanges {
     // 4. Render X Axis Headers (HPO Terms turned -45 deg)
     const xLabels = mainGroup.append('g')
       .selectAll('.x-label')
-      .data(rows)
+      .data(cols)
       .enter()
       .append('g')
       .attr('transform', d => `translate(${xScale(d.hpoId)! + xScale.bandwidth() / 2}, 0)`);
@@ -142,7 +134,7 @@ export class PresenceMatrixComponent implements OnChanges {
       .text(d => d);
 
     // 6. Draw the Presence Circle Grid Nodes
-    rows.forEach((row) => {
+    cols.forEach((row) => {
       genes.forEach((gene) => {
         const score = row.scores[gene] ?? 0.0;
         const cx = xScale(row.hpoId)! + xScale.bandwidth() / 2;
@@ -198,3 +190,5 @@ export class PresenceMatrixComponent implements OnChanges {
     });
   }
 }
+
+export { PresenceMatrixPayload };

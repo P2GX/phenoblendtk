@@ -1,9 +1,10 @@
 pub mod phenoblend;
-pub mod errors;
+
 mod hpoa;
 mod hpo;
 mod model;
 mod blend;
+mod util;
 
 
 use ontolius::ontology::OntologyTerms;
@@ -13,6 +14,7 @@ use ga4ghphetools::tauri::{pick_file_and_process, load_ontology, OntologyLoadEve
 use phenopackets::schema::v2::Phenopacket;
 
 use crate::{blend::dto::PresenceMatrixPayload, phenoblend::PhenoblendSingleton};
+use crate::util::errors::PhenoblendError;
 
 struct AppState {
     phenoblendtk: Mutex<PhenoblendSingleton>,
@@ -57,12 +59,12 @@ pub fn run() {
 fn ingest_phenopacket(
     app: AppHandle,
     state: tauri::State<'_, Arc<AppState>>,
-    payload: String
+    ppkt: String
 ) -> Result<(), String> {
     let state_handle = state.inner().clone();
     let mut singleton = state_handle.phenoblendtk.lock().unwrap();
     let _ = app.emit("ppkt-load-event", OntologyLoadEvent::loading());
-    let mut json_value: serde_json::Value = serde_json::from_str(&payload)
+    let mut json_value: serde_json::Value = serde_json::from_str(&ppkt)
         .map_err(|e| format!("Invalid JSON syntax structure: {}", e))?;
     // 2. Safely inject the missing field into the vitalStatus block if it exists
     if let Some(subject) = json_value.get_mut("subject") {
@@ -121,7 +123,7 @@ async fn load_hpoas(
             Ok(disease_model_map) => {
                 let mut singleton = state_handle.phenoblendtk.lock().unwrap();
                 let n_terms = disease_model_map.len();
-                singleton.set_hpoa_d(disease_model_map);
+                singleton.set_hpoa_d(disease_model_map, &hpoa_path);
                 let _ = app_handle.emit(
                     "hpoa-load-event", 
                     OntologyLoadEvent::success("HPOAs loaded".to_string(), n_terms)
@@ -144,12 +146,12 @@ async fn load_gene_disease_associations(
 ) -> Result<(), String> {
  let state_handle = state.inner().clone();
     let _ = app.emit("g2d-load-event", OntologyLoadEvent::loading());
-    pick_file_and_process(app, "g2d-load-event", move |hpoa_path, app_handle| async move {
-        match crate::hpoa::gene_to_disease::load_gene_disease_associations(&hpoa_path) {
+    pick_file_and_process(app, "g2d-load-event", move |g2d_path, app_handle| async move {
+        match crate::hpoa::gene_to_disease::load_gene_disease_associations(&g2d_path) {
             Ok(g2d) => {
                 let mut singleton = state_handle.phenoblendtk.lock().unwrap();
                 let n_terms = g2d.len();
-                singleton.set_gene_to_disease(g2d);
+                singleton.set_gene_to_disease(g2d, &g2d_path);
                 let _ = app_handle.emit(
                     "g2d-load-event", 
                     OntologyLoadEvent::success("gene to disease loaded".to_string(), n_terms)

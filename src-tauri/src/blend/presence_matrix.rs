@@ -182,3 +182,127 @@ pub fn calculate_presence_matrix(
         columns: rows,
     })
 }
+
+
+
+/// Sorts the columns (gene entities) and rows (PresenceMatrixItem) following the explicit 
+/// hierarchal block rules established in the Python pipeline.
+pub fn sort_presence_payload(mut payload: PresenceMatrixPayload) -> PresenceMatrixPayload {
+    if payload.entities.is_empty() || payload.columns.is_empty() {
+        return payload;
+    }
+    let n_columns = payload.n_columns();
+
+    // --- 1. Sort Entities (Columns) ---
+    // Calculate column sums for each entity
+    let mut entity_sums: HashMap<String, f64> = HashMap::new();
+    for entity in &payload.entities {
+        let sum: f64 = payload.columns.iter()
+            .map(|item| item.scores.get(entity).copied().unwrap_or(0.0))
+            .sum();
+        entity_sums.insert(entity.clone(), sum);
+    }
+
+    // Sort entities descending by sum. 
+    // Ties fall back to their original position to preserve caller stability.
+    let mut sorted_entities = payload.entities.clone();
+    sorted_entities.sort_by(|a, b| {
+        let sum_a = entity_sums.get(a).unwrap_or(&0.0);
+        let sum_b = entity_sums.get(b).unwrap_or(&0.0);
+        
+        // Descending sort: compare b to a
+        sum_b.total_cmp(sum_a)
+    });
+
+    // --- 2. Sort Rows (PresenceMatrixItem) ---
+    // Track original index positions for stable tie-breaking
+    let original_positions: HashMap<String, usize> = payload.columns.iter()
+        .enumerate()
+        .map(|(i, item)| (item.hpo_id.clone(), i))
+        .collect();
+
+    // Group rows into three categories: full, partial, and zero matches
+    let mut full_keys: Vec<(isize, Vec<usize>, usize, PresenceMatrixItem)> = Vec::new();
+    let mut partial_keys: Vec<(usize, f64, usize, PresenceMatrixItem)> = Vec::new(); // Note: we'll negate the score during total_cmp
+    let mut zero_keys: Vec<(usize, PresenceMatrixItem)> = Vec::new();
+
+    for item in payload.columns {
+        let input_idx = *original_positions.get(&item.hpo_id).unwrap_or(&0);
+
+        // Find positions of full matches (score == 1.0) in the new sorted entity order
+        let full_positions: Vec<usize> = sorted_entities.iter()
+            .enumerate()
+            .filter(|(_, entity)| {
+                let score = item.scores.get(*entity).copied().unwrap_or(0.0);
+                (score - 1.0).abs() < f64::EPSILON // Check if exactly 1.0
+            })
+            .map(|(i, _)| i)
+            .collect();
+
+        if !full_positions.is_empty() {
+            // Key: (-count of full matches, positions vector, original position)
+            let count_key = -(full_positions.len() as isize);
+            full_keys.push((count_key, full_positions, input_idx, item));
+            continue;
+        }
+
+        // Check for partial matches or all zeros
+        let mut best_score = 0.0;
+        let mut primary_pos = None;
+
+        for (i, entity) in sorted_entities.iter().enumerate() {
+            let score = item.scores.get(entity).copied().unwrap_or(0.0);
+            if score > best_score {
+                best_score = score;
+                primary_pos = Some(i);
+            }
+        }
+
+        if let Some(pos) = primary_pos {
+            // Key: (leftmost primary position, best score, original position)
+            partial_keys.push((pos, best_score, input_idx, item));
+        } else {
+            // Key: (original position)
+            zero_keys.push((input_idx, item));
+        }
+    }
+
+    // --- 3. Sorting the buckets ---
+
+    // Full match sorting: by negative length (descending size), then by lexicographical vectors, then stable pos
+    full_keys.sort_by(|a, b| {
+        match a.0.cmp(&b.0) {
+            std::cmp::Ordering::Equal => match a.1.cmp(&b.1) {
+                std::cmp::Ordering::Equal => a.2.cmp(&b.2),
+                other => other,
+            },
+            other => other,
+        }
+    });
+
+    // Partial match sorting: primary pos ascending, best score descending, then stable pos
+    partial_keys.sort_by(|a, b| {
+        match a.0.cmp(&b.0) {
+            std::cmp::Ordering::Equal => match b.1.total_cmp(&a.1) { // Descending sort on float score
+                std::cmp::Ordering::Equal => a.2.cmp(&b.2),
+                other => other,
+            },
+            other => other,
+        }
+    });
+
+    // Zero match sorting: stable position order
+    zero_keys.sort_by_key(|k| k.0);
+
+    // --- 4. Reassemble output ---
+    let mut sorted_columns = Vec::with_capacity(n_columns);
+    
+    sorted_columns.extend(full_keys.into_iter().map(|k| k.3));
+    sorted_columns.extend(partial_keys.into_iter().map(|k| k.3));
+    sorted_columns.extend(zero_keys.into_iter().map(|k| k.1));
+
+    PresenceMatrixPayload {
+        entities: sorted_entities,
+        columns: sorted_columns,
+    }
+}

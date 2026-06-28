@@ -6,6 +6,6 @@ export interface PresenceMatrixRow {
 }
 
 export interface PresenceMatrixPayload {
-  genes: string[]; // Already sorted by your column ranking rules
-  rows: PresenceMatrixRow[]; // Already sorted by your tier blocks
+  entities: string[]; // Already sorted by your column ranking rules
+  columns: PresenceMatrixRow[]; // Already sorted by your tier blocks
 }
