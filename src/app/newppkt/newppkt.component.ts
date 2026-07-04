@@ -5,6 +5,8 @@ import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { from, Observable } from 'rxjs';
 import { ConfigService } from '../services/config-service';
 import { HpoTwostepComponent } from '../util/hpotwostep/hpotwostep.component';
+import { firstValueFrom } from 'rxjs';
+import { OnsetInputDialogComponent } from '../util/onset/onset-input-dialog.component';
 
 
 export interface FenominalMiningInterface {
@@ -15,7 +17,7 @@ export interface FenominalMiningInterface {
 @Component({
   selector: 'app-new-case',
   standalone: true,
-  imports: [CommonModule, PhenopacketLoaderComponent],
+  imports: [CommonModule, OnsetInputDialogComponent, PhenopacketLoaderComponent],
   templateUrl: './newppkt.component.html',
   styleUrls: ['./newppkt.component.scss']
 })
@@ -75,7 +77,8 @@ export class NewPpktComponent {
       data: {
         mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
         searchProvider: this.hpoSearchProvider,
-        hierarchyProvider: this.fetchHpoHierarchy
+        hierarchyProvider: this.fetchHpoHierarchy,
+        createOnsetProvider: this.o
       }
     });
 
@@ -103,7 +106,11 @@ export class NewPpktComponent {
       return data;
     });
   };
-
+  createOnsetProvider = (annotation: PolishedHpoAnnotation): Promise<string | null> => {
+    return firstValueFrom(
+      this.dialog.open(OnsetInputDialogComponent).afterClosed()
+    ).then(result => result ?? null);
+  };
    
 
   private proceedToNextWindow(observedTerms: any[]): void {

@@ -7,6 +7,7 @@ import { NotificationService } from 'ng-hpo-uikit';
 import { HpoPolishingWorkspaceComponent } from 'ng-hpo-uikit';
 import { FenominalSentence } from 'ng-hpo-uikit';
 import { Observable } from 'rxjs/internal/Observable';
+import { OnsetInputDialogComponent } from '../onset/onset-input-dialog.component';
 
 
 
@@ -15,6 +16,7 @@ export interface HpoTwostepData {
   searchProvider: (query: string) => Observable<OntologyMatch[]>;
   mineTextProvider: (text: string) => Promise<FenominalSentence[]>;
   hierarchyProvider: (termId: string) => Promise<HierarchyMapItem>;
+  createOnsetProvider: (annotation: PolishedHpoAnnotation) => Promise<string | null>;
 }
 
 @Component({
@@ -23,7 +25,8 @@ export interface HpoTwostepData {
   imports: [
     HpoMiningComponent,
     HpoPolishingWorkspaceComponent,
-    MatIcon
+    MatIcon,
+    OnsetInputDialogComponent
   ],
   templateUrl: './hpotwostep.component.html',
   styleUrl: './hpotwostep.component.scss'
@@ -38,6 +41,8 @@ export class HpoTwostepComponent implements OnDestroy {
   protected readonly searchProvider = this.dialogData.searchProvider;
   protected readonly mineTextProvider = this.dialogData.mineTextProvider; 
   protected readonly hierarchyProvider = this.dialogData.hierarchyProvider;
+  protected readonly createOnsetProvider = this.dialogData.createOnsetProvider;
+
 
 
   ngOnDestroy(): void {
@@ -77,6 +82,8 @@ export class HpoTwostepComponent implements OnDestroy {
     console.log("output");
     this.dialogRef.close(finalSentences);  
   }
+
+
 
   @HostListener('document:keydown.escape')
   protected onKeydownHandler(): void {
