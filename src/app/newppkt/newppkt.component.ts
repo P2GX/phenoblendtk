@@ -78,7 +78,7 @@ export class NewPpktComponent {
         mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
         searchProvider: this.hpoSearchProvider,
         hierarchyProvider: this.fetchHpoHierarchy,
-        createOnsetProvider: this.o
+        createOnsetProvider: this.createOnsetProvider
       }
     });
 
