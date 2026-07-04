@@ -1,6 +1,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
+use fenominal::{AutoCompleter, Fenominal, FenominalSentence, OntologyMatch};
 use ga4ghphetools::tauri::load_ontology;
 use ontolius::{TermId,  ontology::csr::FullCsrOntology};
 use phenopackets::schema::v2::Phenopacket;
@@ -11,12 +12,13 @@ use crate::hpoa::disease_model::GeneDiseaseAssociation;
 use crate::util::settings::PhenoblendSettings;
 
 pub struct PhenoblendSingleton {
-    settings: PhenoblendSettings,
-    individual: Proband,
-    hpo: Option<Arc<FullCsrOntology>>,
-    omim_disease_models:  Option<HashMap<TermId, SimpleDiseaseModel>>,
-    gene_to_disease_d: Option<HashMap<String, Vec<GeneDiseaseAssociation>>>,
-    disease_count_d: HashMap<TermId, usize>,
+    pub(crate) settings: PhenoblendSettings,
+    pub(crate) individual: Proband,
+    pub(crate) hpo: Option<Arc<FullCsrOntology>>,
+    pub(crate) omim_disease_models:  Option<HashMap<TermId, SimpleDiseaseModel>>,
+    pub(crate) gene_to_disease_d: Option<HashMap<String, Vec<GeneDiseaseAssociation>>>,
+    pub(crate) disease_count_d: HashMap<TermId, usize>,
+    pub(crate) autocompleter: Option<AutoCompleter>
 }
 
 
@@ -28,6 +30,7 @@ impl PhenoblendSingleton {
 
     pub fn set_hpo(&mut self, ontology: Arc<FullCsrOntology>, hpo_json_path: &str) {
         self.hpo = Some(ontology.clone());
+        self.autocompleter = Some(AutoCompleter::new(ontology.clone()));
         let _ = self.settings.set_hp_json_path(hpo_json_path);
     }
 
@@ -127,6 +130,28 @@ impl PhenoblendSingleton {
             .unwrap_or(0)
     }
 
+     /// Provide Strings with TermId - Label that will be used for autocompletion
+    /// fenominal functionality
+    pub fn search_hpo(&self, query: &str, limit: usize) -> Vec<OntologyMatch> {
+        self.autocompleter
+            .as_ref()
+            .map(|ac| ac.search_hpo(query, limit))
+            .unwrap_or_default()
+    }
+
+    pub fn mine_clinical_text(
+        &self,
+        text: &str
+     ) -> Result<Vec<FenominalSentence>, String> {
+        match &self.hpo {
+            Some(hpo) => {
+                let fenominal = Fenominal::new(hpo.clone());
+                fenominal.mine_sentences(text).map_err(|e|e.to_string())
+            },
+            None => {Err("HPO not initialized".to_string())},
+    }
+}
+
 
 }
 
@@ -142,9 +167,13 @@ impl Default for PhenoblendSingleton {
             omim_disease_models: None,
             gene_to_disease_d: None,
             disease_count_d: HashMap::new(),
+            autocompleter: None
         };
        if let Some(ontology) = settings.get_hp_json_path().ok().and_then(|path| load_ontology(&path).ok()) {
             singleton.hpo = Some(ontology);
+        } else {
+            println!("Did not get ontology");
+            println!("Oath: {:?}", settings.get_hp_json_path());
         }
         if let Some(omim_map) = settings.get_hpoa_path().ok().and_then(|path| crate::hpoa::hpoa_ingest::load_hpoa_d(&path).ok()) {
             singleton.omim_disease_models = Some(omim_map);

@@ -1,0 +1,34 @@
+<div class="native-modal-backdrop">
+  <div class="native-modal-container" (click)="$event.stopPropagation()">
+    
+    <header class="modal-header">
+      <div class="header-title">
+        <mat-icon>science</mat-icon>
+        <span>HPO Text Mining</span>
+      </div>
+      <button class="close-icon-btn" (click)="close()">×</button>
+    </header>
+
+    <main class="modal-body">
+      @if(currentStep() === 1) {
+        <hpo-mining-workspace
+          (miningRequested)="handleMiningRequest($event)"
+          (success)="onTextMiningSuccess($event)"
+          (error)="onTextMiningError($event)"
+          (cancel)="dialogRef.close()">
+        </hpo-mining-workspace>
+      } @else if (currentStep() === 2 && curatedSentences().length > 0) {
+        <hpo-polishing-workspace
+          [sentences]="curatedSentences()"
+          [searchProvider]="searchProvider"
+          (complete)="onCurationComplete($event)"
+          (cancel)="dialogRef.close()">
+        </hpo-polishing-workspace>
+      }
+    </main>
+    <p>Debug Array Length: {{ curatedSentences().length }}</p>
+  @for (s of curatedSentences(); track $index) {
+    <p>Term text snippet: {{ s.originalText }}</p>
+  }
+  </div>
+</div>

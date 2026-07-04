@@ -7,14 +7,17 @@ mod blend;
 mod util;
 
 
+use fenominal::OntologyMatch;
+use fenominal::FenominalSentence;
 use ontolius::ontology::OntologyTerms;
-use tauri::{AppHandle, Emitter, Runtime, WindowEvent};
+use tauri::{AppHandle, Emitter, WindowEvent};
 use std::sync::{Arc, Mutex};
 use ga4ghphetools::tauri::{pick_file_and_process, load_ontology, OntologyLoadEvent};
 use phenopackets::schema::v2::Phenopacket;
 
 use crate::{blend::dto::PresenceMatrixPayload, phenoblend::PhenoblendSingleton};
-use crate::util::errors::PhenoblendError;
+use crate::model::status::InitializationStatusDto;
+
 
 struct AppState {
     phenoblendtk: Mutex<PhenoblendSingleton>,
@@ -33,11 +36,14 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())     
         .invoke_handler(tauri::generate_handler![
+            check_initialization_status,
+            get_hpo_autocomplete,
             get_presence_matrix,
             ingest_phenopacket,
             load_hpo,
             load_hpoas,
-            load_gene_disease_associations
+            load_gene_disease_associations,
+            mine_clinical_text
         ])
         .setup(|app| {
             Ok(())
@@ -174,4 +180,56 @@ async fn get_presence_matrix(
     let state_handle = state.inner().clone();
     let mut singleton = state_handle.phenoblendtk.lock().unwrap();
     singleton.calculate_presence_matrix()
+}
+
+
+
+/// This function supplies the autocompletion candidates for angular for the HPO
+/// The JavaScript ensures that query is at least 3 letters
+#[tauri::command]
+fn get_hpo_autocomplete(
+    state: tauri::State<'_, Arc<AppState>>,
+    query: String
+) -> Vec<OntologyMatch> {
+    let singleton = match state.phenoblendtk.lock() {
+        Ok(s) => s,
+        Err(_) => return vec![],
+    };
+
+    // If query is too short, don't even bother searching
+    if query.len() < 3 {
+        return vec![];
+    }
+    singleton.search_hpo(&query, 20)
+}
+
+#[tauri::command]
+async fn mine_clinical_text(
+    state: tauri::State<'_, Arc<AppState>>,
+    text: String,
+) -> Result<Vec<FenominalSentence>, String> {
+    let singleton = match state.phenoblendtk.lock() {
+        Ok(s) => s,
+        Err(_) => return Err("Failed to acquire application state lock".to_string()),
+    };
+    singleton
+        .mine_clinical_text(&text)
+}
+
+
+#[tauri::command]
+async fn check_initialization_status(
+    state: tauri::State<'_, Arc<AppState>>,
+) -> Result<InitializationStatusDto, String> {
+    let singleton = state.phenoblendtk.lock()
+        .map_err(|_| "Failed to lock state".to_string())?;
+
+    Ok(InitializationStatusDto {
+        hpo_loaded: singleton.hpo.is_some(),
+        hpo_terms: singleton.hpo.as_ref().map(|h| h.len()).unwrap_or(0), // adjust based on your ontology structure length method
+        hpoa_loaded: singleton.omim_disease_models.is_some(),
+        hpoa_diseases: singleton.omim_disease_models.as_ref().map(|m| m.len()).unwrap_or(0),
+        g2d_loaded: singleton.gene_to_disease_d.is_some(),
+        n_genes: singleton.gene_to_disease_d.as_ref().map(|g| g.len()).unwrap_or(0),
+    })
 }

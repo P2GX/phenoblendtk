@@ -3,6 +3,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { StatusDto } from '../models/status_dto';
 import { ask } from '@tauri-apps/plugin-dialog';
 import { PresenceMatrixPayload } from '../models/viz_dto';
+import { FenominalSentence, OntologyMatch } from 'ng-hpo-uikit';
+import { InitializationStatusDto } from '../models/status_dto'; 
 
 @Injectable({
   providedIn: 'root'
@@ -30,5 +32,16 @@ export class ConfigService {
     return await invoke("get_presence_matrix");
   }
 
+  async getAutocompleteHpo(value: string): Promise<OntologyMatch[]> {
+    return invoke<OntologyMatch[]>('get_hpo_autocomplete', { query: value });
+  }
 
+  async mineClinicalText(text: string): Promise<FenominalSentence[]> {
+    return invoke<FenominalSentence[]>('mine_clinical_text', { text });
+  }
+
+  async checkInitializationStatus(): Promise<InitializationStatusDto> {
+    return invoke<InitializationStatusDto>('check_initialization_status');
+  }
+  
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, NgZone, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, NgZone, signal } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 
@@ -34,8 +34,6 @@ export class HomeComponent {
   private notificationService = inject(NotificationService);
   public statusService = inject(AppStatusService);
   private configService = inject(ConfigService);
-
-  private ngZone = inject(NgZone);
   private cancelMessage = signal<string | null>(null);
 
 

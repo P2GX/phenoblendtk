@@ -1426,8 +1426,8 @@ dependencies = [
 
 [[package]]
 name = "fenominal"
-version = "0.2.8"
-source = "git+https://github.com/P2GX/fenominal.git?tag=0.2.8#a65b4af8b5c51a41bb539b64b55b744e4b9abdb4"
+version = "0.2.13"
+source = "git+https://github.com/P2GX/fenominal.git?tag=0.2.13#c423503ffb7a155fdd6758bce91703561946ad76"
 dependencies = [
  "clap",
  "deunicode",
@@ -1438,6 +1438,7 @@ dependencies = [
  "rstest",
  "serde",
  "serde_json",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -3462,7 +3463,7 @@ dependencies = [
 
 [[package]]
 name = "phenoblendtk"
-version = "0.1.1"
+version = "0.1.9"
 dependencies = [
  "csv",
  "dirs",

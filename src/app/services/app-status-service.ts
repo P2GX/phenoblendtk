@@ -6,7 +6,7 @@ import { ask } from '@tauri-apps/plugin-dialog';
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { NotificationService } from 'ng-hpo-uikit';
 import { WritableSignal } from '@angular/core';
-
+import { InitializationStatusDto } from '../models/status_dto'; 
 
 // Corresponds to OntologyLoadEvent in ga4ghphetools
 interface OntologyLoadEvent {
@@ -39,13 +39,13 @@ export class AppStatusService {
   g2dLoading = signal<boolean>(false);
   nGenes = signal<number>(0);
   biocuratorOrcid = signal<string>('');
-
-  // Global Error tracking can be contextualized or kept simple
   errorMessage = signal<string>('');
   hasError = computed(() => !!this.errorMessage());
 
     constructor() {
-      this.setupListeners();
+      this.setupListeners().then(() => {
+        this.fetchPreloadedStatus();
+      });
     }
 
 
@@ -130,6 +130,27 @@ private async registerOntologyListener(config: {
   });
 }
 
+  private async fetchPreloadedStatus() {
+    try {
+      const status = await invoke<InitializationStatusDto>('check_initialization_status');
+      
+      this.ngZone.run(() => {
+        this.hpoLoaded.set(status.hpo_loaded);
+        this.nHpoTerms.set(status.hpo_terms);
+        if (status.hpo_loaded) this.hpoVersion.set('Preloaded from Settings');
+
+        this.hpoaLoaded.set(status.hpoa_loaded);
+        this.nHpoaDisease.set(status.hpoa_diseases);
+        if (status.hpoa_loaded) this.hpoaVersion.set('Preloaded from Settings');
+
+        this.g2dLoaded.set(status.g2d_loaded);
+        this.nGenes.set(status.n_genes);
+        if (status.g2d_loaded) this.g2dVersion.set('Preloaded from Settings');
+      });
+    } catch (err: any) {
+      console.error('Failed to resolve initial backend pre-load state context:', err);
+    }
+  }
     
 
 }

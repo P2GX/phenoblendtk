@@ -1,14 +1,36 @@
 <div class="new-case-container">
   <header class="workspace-header">
-    <h1>Load a GA4GH phenopacket</h1>
-    <p>The phenopacket should contain data about an individual with a multiple-genetic diagnosis.</p>
+    <h1>Initialize Clinical Case</h1>
+    <p>Select a method to import or extract Human Phenotype Ontology (HPO) terms for the patient.</p>
   </header>
 
   <div class="workspace-body">
-    <lib-phenopacket-loader 
-      [onIngest]="processPhenopacketIngest">
-    </lib-phenopacket-loader>
+    <div class="ingest-options-grid">
+      <!-- Option 1: Phenopacket Upload -->
+      <div class="ingest-card">
+        <div class="card-icon">📄</div>
+        <h2>Load GA4GH Phenopacket</h2>
+        <p>Import clinical data directly from an existing GA4GH phenopacket JSON payload.</p>
+        <hpo-phenopacket-loader 
+          [onIngest]="processPhenopacketIngest">
+        </hpo-phenopacket-loader>
+      </div>
 
+      <!-- Option 2: Text Mining Wizard -->
+      <div class="ingest-card text-mining-card">
+        <div class="card-icon">🔍</div>
+        <h2>Text Mining Curation</h2>
+        <p>Analyze unstructured clinical notes and curate HPO terms using the two-step wizard.</p>
+        <button 
+          class="btn-primary" 
+          [disabled]="isProcessing()"
+          (click)="openCurationWizard()">
+          Launch Text Mining Wizard
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Indicators -->
     @if (isProcessing()) {
       <div class="status-indicator processing">
         <span class="spinner">⏳</span> {{ statusMessage() }}

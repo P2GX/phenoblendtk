@@ -12,6 +12,7 @@ export class NavbarComponent implements OnInit{
   tabs = [
     { label: 'Home', path: '/home' },
     { label: 'Load phenopacket', path: '/newppkt' },
+    { label: 'HPO text mining', path: '/hpotwostep' },
     { label: 'Visualize', path: '/visualize'}
   ];
 
