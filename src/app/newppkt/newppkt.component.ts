@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FenominalSentence, NotificationService, OntologyMatch, PhenopacketLoaderComponent } from 'ng-hpo-uikit';
+import { FenominalSentence, HierarchyMapItem, NotificationService, OntologyMatch, PhenopacketLoaderComponent, PolishedHpoAnnotation } from 'ng-hpo-uikit';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { from, Observable } from 'rxjs';
 import { ConfigService } from '../services/config-service';
@@ -29,6 +29,7 @@ export class NewPpktComponent {
   private notificationService = inject(NotificationService);
   private dialog = inject(MatDialog);
   
+  protected hierarchyCache = signal<Record<string, HierarchyMapItem>>({});
 
   /**
    * The explicit callback handler passed down to the library loader.
@@ -73,7 +74,8 @@ export class NewPpktComponent {
       disableClose: true,
       data: {
         mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
-        searchProvider: this.hpoSearchProvider
+        searchProvider: this.hpoSearchProvider,
+        hierarchyProvider: this.fetchHpoHierarchy
       }
     });
 
@@ -89,6 +91,20 @@ export class NewPpktComponent {
       }
     });
   }
+
+  fetchHpoHierarchy = (termId: string): Promise<HierarchyMapItem> => {
+    const cached = this.hierarchyCache()[termId];
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+    
+    return this.configService.getHpoParentAndChildrenTerms(termId).then(data => {
+      this.hierarchyCache.update(cache => ({ ...cache, [termId]: data }));
+      return data;
+    });
+  };
+
+   
 
   private proceedToNextWindow(observedTerms: any[]): void {
     this.notificationService.showSuccess("TODO implement proceed to next")

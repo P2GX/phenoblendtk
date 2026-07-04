@@ -2,10 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use oboannotation::hpo::Frequency::Frequency;
 use oboannotation::io::AnnotationLoader;
-use oboannotation::hpo::HpoAnnotation;
 use oboannotation::hpo::io::{HpoAnnotationLines, HpoAnnotationLoader};
 use ontolius::TermId;
-use ontolius::term::MinimalTerm;
 
 use crate::util::errors::PhenoblendError;
 use crate::hpoa::disease_model::SimpleDiseaseModel;

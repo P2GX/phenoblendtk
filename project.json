@@ -20,7 +20,8 @@
         "tsConfig": "tsconfig.app.json",
         "assets": ["src/favicon.ico", "src/assets"],
         "styles": ["src/styles.scss", "node_modules/material-icons/iconfont/material-icons.css"],
-        "scripts": []
+        "scripts": [],
+        "preserveSymlinks": true
       },
       "configurations": {
         "production": {

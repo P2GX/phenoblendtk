@@ -9,6 +9,7 @@ mod util;
 
 use fenominal::OntologyMatch;
 use fenominal::FenominalSentence;
+use ga4ghphetools::tauri::models::HierarchyMapItem;
 use ontolius::ontology::OntologyTerms;
 use tauri::{AppHandle, Emitter, WindowEvent};
 use std::sync::{Arc, Mutex};
@@ -38,6 +39,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             check_initialization_status,
             get_hpo_autocomplete,
+            get_hpo_parent_and_children_terms,
             get_presence_matrix,
             ingest_phenopacket,
             load_hpo,
@@ -233,3 +235,16 @@ async fn check_initialization_status(
         n_genes: singleton.gene_to_disease_d.as_ref().map(|g| g.len()).unwrap_or(0),
     })
 }
+
+
+
+#[tauri::command]
+async fn get_hpo_parent_and_children_terms(
+    state: tauri::State<'_, Arc<AppState>>,
+    term_id: &str,
+) -> Result<HierarchyMapItem, String> {
+    let singleton = state.phenoblendtk.lock()
+        .map_err(|_| "Failed to lock state".to_string())?;
+    singleton.get_hpo_parent_and_children_terms(term_id)
+}
+

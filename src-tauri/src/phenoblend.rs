@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use fenominal::{AutoCompleter, Fenominal, FenominalSentence, OntologyMatch};
 use ga4ghphetools::tauri::load_ontology;
+use ga4ghphetools::tauri::models::HierarchyMapItem;
 use ontolius::{TermId,  ontology::csr::FullCsrOntology};
 use phenopackets::schema::v2::Phenopacket;
 
@@ -139,6 +140,17 @@ impl PhenoblendSingleton {
             .unwrap_or_default()
     }
 
+
+    pub fn get_hpo_parent_and_children_terms(&self, term_id: &str) -> Result<HierarchyMapItem, String> {
+        match &self.hpo {
+            Some(hpo) => {
+                let hm = ga4ghphetools::tauri::parent_child::get_hpo_parent_and_children_terms(term_id, hpo.clone());
+                Ok(hm)
+            },
+            None => Err("Could not retrieve parent/child hierarchy".to_string())
+        }
+    }
+
     pub fn mine_clinical_text(
         &self,
         text: &str
@@ -150,6 +162,9 @@ impl PhenoblendSingleton {
             },
             None => {Err("HPO not initialized".to_string())},
     }
+
+
+
 }
 
 

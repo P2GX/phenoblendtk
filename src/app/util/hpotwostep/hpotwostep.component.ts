@@ -1,7 +1,7 @@
 import { Component, HostListener, inject, input, OnDestroy, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
-import { FenominalHit, OntologyMatch, PolishedHpoAnnotation } from 'ng-hpo-uikit';
+import { HierarchyMapItem, OntologyMatch, PolishedHpoAnnotation } from 'ng-hpo-uikit';
 import { HpoMiningComponent } from 'ng-hpo-uikit';
 import { NotificationService } from 'ng-hpo-uikit';
 import { HpoPolishingWorkspaceComponent } from 'ng-hpo-uikit';
@@ -9,15 +9,12 @@ import { FenominalSentence } from 'ng-hpo-uikit';
 import { Observable } from 'rxjs/internal/Observable';
 
 
-export interface HpoRelationsResult {
-  termId: string;
-  parents: FenominalHit[];
-  children: FenominalHit[];
-}
+
 
 export interface HpoTwostepData {
   searchProvider: (query: string) => Observable<OntologyMatch[]>;
   mineTextProvider: (text: string) => Promise<FenominalSentence[]>;
+  hierarchyProvider: (termId: string) => Promise<HierarchyMapItem>;
 }
 
 @Component({
@@ -40,7 +37,7 @@ export class HpoTwostepComponent implements OnDestroy {
   private readonly dialogData = inject<HpoTwostepData>(MAT_DIALOG_DATA);
   protected readonly searchProvider = this.dialogData.searchProvider;
   protected readonly mineTextProvider = this.dialogData.mineTextProvider; 
-  
+  protected readonly hierarchyProvider = this.dialogData.hierarchyProvider;
 
 
   ngOnDestroy(): void {

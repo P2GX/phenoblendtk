@@ -15,3 +15,15 @@ The template runs already as a tauri app and shows how to load the HPO and the M
 - You can use this as a template for new Tauri applications
 - The template is partially based on the [phenoboard](https://github.com/P2GX/phenoboard) application
 - Probably most use cases will profit from adding the navbar component from phenoboard and adapting it to the needs of the new app.
+
+
+## For testing
+
+Replace this line
+```json
+    "ng-hpo-uikit": "github:P2GX/ng-hpo-uikit#dist-build",
+```
+in the package.json file with
+```json
+"ng-hpo-uikit": "file:../path/to/your/library/dist/ng-hpo-uikit"
+```

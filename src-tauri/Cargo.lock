@@ -1654,7 +1654,7 @@ dependencies = [
 
 [[package]]
 name = "ga4ghphetools"
-version = "0.6.17"
+version = "0.6.18"
 dependencies = [
  "calamine",
  "chrono",
@@ -3463,7 +3463,7 @@ dependencies = [
 
 [[package]]
 name = "phenoblendtk"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "csv",
  "dirs",

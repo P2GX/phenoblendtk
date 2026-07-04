@@ -21,6 +21,7 @@
         <hpo-polishing-workspace
           [sentences]="curatedSentences()"
           [searchProvider]="searchProvider"
+          [hierarchyProvider]="hierarchyProvider"
           (complete)="onCurationComplete($event)"
           (cancel)="dialogRef.close()">
         </hpo-polishing-workspace>

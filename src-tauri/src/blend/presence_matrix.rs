@@ -35,7 +35,7 @@ impl Entity {
         self.disease_hpo_ids.insert(tid.clone());
         self.explicit_annotation_ids.insert(tid.clone());
         for desc_id in hpo.iter_descendant_ids(tid) {
-             self.disease_hpo_ids.insert(tid.clone());
+             self.disease_hpo_ids.insert(desc_id.clone());
         }
     }
 
