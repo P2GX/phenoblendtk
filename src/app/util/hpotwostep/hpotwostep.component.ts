@@ -16,7 +16,6 @@ export interface HpoTwostepData {
   searchProvider: (query: string) => Observable<OntologyMatch[]>;
   mineTextProvider: (text: string) => Promise<FenominalSentence[]>;
   hierarchyProvider: (termId: string) => Promise<HierarchyMapItem>;
-  createOnsetProvider: (annotation: PolishedHpoAnnotation) => Promise<string | null>;
 }
 
 @Component({
@@ -25,8 +24,7 @@ export interface HpoTwostepData {
   imports: [
     HpoMiningComponent,
     HpoPolishingWorkspaceComponent,
-    MatIcon,
-    OnsetInputDialogComponent
+    MatIcon
   ],
   templateUrl: './hpotwostep.component.html',
   styleUrl: './hpotwostep.component.scss'
@@ -41,7 +39,6 @@ export class HpoTwostepComponent implements OnDestroy {
   protected readonly searchProvider = this.dialogData.searchProvider;
   protected readonly mineTextProvider = this.dialogData.mineTextProvider; 
   protected readonly hierarchyProvider = this.dialogData.hierarchyProvider;
-  protected readonly createOnsetProvider = this.dialogData.createOnsetProvider;
 
 
 

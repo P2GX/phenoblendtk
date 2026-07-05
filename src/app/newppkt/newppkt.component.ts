@@ -78,7 +78,6 @@ export class NewPpktComponent {
         mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
         searchProvider: this.hpoSearchProvider,
         hierarchyProvider: this.fetchHpoHierarchy,
-        createOnsetProvider: this.createOnsetProvider
       }
     });
 
@@ -87,7 +86,7 @@ export class NewPpktComponent {
     dialogRef.afterClosed().subscribe((polishedAnnotations) => {
       if (polishedAnnotations) {
         console.log('Received curated HPO annotations:', polishedAnnotations);
-        const observedTerms = polishedAnnotations.filter((annot: { isObserved: any; }) => annot.isObserved);
+        const observedTerms = polishedAnnotations.filter((annot: { excluded: any; }) => ! annot.excluded);
         console.log('Observed terms from text mining:', observedTerms);
         
         this.proceedToNextWindow(observedTerms);
@@ -106,11 +105,7 @@ export class NewPpktComponent {
       return data;
     });
   };
-  createOnsetProvider = (annotation: PolishedHpoAnnotation): Promise<string | null> => {
-    return firstValueFrom(
-      this.dialog.open(OnsetInputDialogComponent).afterClosed()
-    ).then(result => result ?? null);
-  };
+
    
 
   private proceedToNextWindow(observedTerms: any[]): void {
