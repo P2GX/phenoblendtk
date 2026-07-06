@@ -5,10 +5,11 @@ mod hpo;
 mod model;
 mod blend;
 mod util;
-
+use serde::{self,Serialize};
 
 use fenominal::OntologyMatch;
 use fenominal::FenominalSentence;
+use ga4ghphetools::dto::hpo_term_dto::HpoTermDuplet;
 use ga4ghphetools::tauri::models::HierarchyMapItem;
 use ontolius::ontology::OntologyTerms;
 use tauri::{AppHandle, Emitter, WindowEvent};
@@ -39,6 +40,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             check_initialization_status,
             get_hpo_autocomplete,
+            get_hpo_modifiers,
             get_hpo_parent_and_children_terms,
             get_presence_matrix,
             ingest_phenopacket,
@@ -246,5 +248,33 @@ async fn get_hpo_parent_and_children_terms(
     let singleton = state.phenoblendtk.lock()
         .map_err(|_| "Failed to lock state".to_string())?;
     singleton.get_hpo_parent_and_children_terms(term_id)
+}
+
+/// format matching the TypeScript `HpoTermMinimal` interface in ng-hpo-uikit.
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HpoTermMinimalDto {
+    pub term_id: String,
+    pub label: String,
+}
+
+impl From<HpoTermDuplet> for HpoTermMinimalDto {
+    fn from(d: HpoTermDuplet) -> Self {
+        HpoTermMinimalDto {
+            term_id: d.hpo_id,
+            label: d.hpo_label,
+        }
+    }
+}
+
+#[tauri::command]
+async fn get_hpo_modifiers(
+    state: tauri::State<'_, Arc<AppState>>
+) -> Result<Vec<HpoTermMinimalDto>, String> {
+    let singleton = state.phenoblendtk.lock()
+        .map_err(|_| "Failed to lock state".to_string())?;
+    let duplets = singleton.get_modifiers()?;
+
+    Ok(duplets.into_iter().map(HpoTermMinimalDto::from).collect())
 }
 

@@ -2,7 +2,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use fenominal::{AutoCompleter, Fenominal, FenominalSentence, OntologyMatch};
-use ga4ghphetools::tauri::load_ontology;
+use ga4ghphetools::{dto::hpo_term_dto::HpoTermDuplet, tauri::load_ontology};
 use ga4ghphetools::tauri::models::HierarchyMapItem;
 use ontolius::{TermId,  ontology::csr::FullCsrOntology};
 use phenopackets::schema::v2::Phenopacket;
@@ -155,20 +155,20 @@ impl PhenoblendSingleton {
         &self,
         text: &str
      ) -> Result<Vec<FenominalSentence>, String> {
-        match &self.hpo {
-            Some(hpo) => {
-                let fenominal = Fenominal::new(hpo.clone());
-                fenominal.mine_sentences(text).map_err(|e|e.to_string())
-            },
-            None => {Err("HPO not initialized".to_string())},
+        let hpo = self.hpo.as_ref().ok_or_else(|| "HPO not initialized".to_string())?;
+        let fenominal = Fenominal::new(hpo.clone());
+        fenominal.mine_sentences(text).map_err(|e|e.to_string())
     }
 
-
+    pub fn get_modifiers(&self) -> Result<Vec<HpoTermDuplet>, String> {
+        let hpo = self.hpo.as_ref().ok_or_else(|| "HPO not initialized".to_string())?;
+        ga4ghphetools::hpo::get_modifiers(hpo.clone())
+    }
 
 }
 
 
-}
+
 
 
 

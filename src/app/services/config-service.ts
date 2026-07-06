@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { invoke } from "@tauri-apps/api/core";
-import { StatusDto } from '../models/status_dto';
-import { ask } from '@tauri-apps/plugin-dialog';
 import { PresenceMatrixPayload } from '../models/viz_dto';
-import { FenominalSentence, HierarchyMapItem, OntologyMatch } from 'ng-hpo-uikit';
+import { FenominalSentence, HierarchyMapItem, OntologyMatch, HpoTermMinimal } from 'ng-hpo-uikit';
 import { InitializationStatusDto } from '../models/status_dto'; 
 
 @Injectable({
@@ -46,6 +44,10 @@ export class ConfigService {
 
   async getHpoParentAndChildrenTerms(termId: string): Promise<HierarchyMapItem> {
     return invoke<HierarchyMapItem>('get_hpo_parent_and_children_terms', { termId });
+  }
+
+  async getHpoModifiers(): Promise<HpoTermMinimal[]> {
+    return invoke<HpoTermMinimal[]>('get_hpo_modifiers');
   }
 
   

@@ -1,14 +1,12 @@
 import { Component, HostListener, inject, input, OnDestroy, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
-import { HierarchyMapItem, OntologyMatch, PolishedHpoAnnotation } from 'ng-hpo-uikit';
+import { HierarchyMapItem, HpoTermMinimal, OntologyMatch, PolishedHpoAnnotation } from 'ng-hpo-uikit';
 import { HpoMiningComponent } from 'ng-hpo-uikit';
 import { NotificationService } from 'ng-hpo-uikit';
 import { HpoPolishingWorkspaceComponent } from 'ng-hpo-uikit';
 import { FenominalSentence } from 'ng-hpo-uikit';
 import { Observable } from 'rxjs/internal/Observable';
-import { OnsetInputDialogComponent } from '../onset/onset-input-dialog.component';
-
 
 
 
@@ -16,6 +14,7 @@ export interface HpoTwostepData {
   searchProvider: (query: string) => Observable<OntologyMatch[]>;
   mineTextProvider: (text: string) => Promise<FenominalSentence[]>;
   hierarchyProvider: (termId: string) => Promise<HierarchyMapItem>;
+  availableModifiers: () => Promise<HpoTermMinimal[]>;
 }
 
 @Component({
@@ -40,6 +39,14 @@ export class HpoTwostepComponent implements OnDestroy {
   protected readonly mineTextProvider = this.dialogData.mineTextProvider; 
   protected readonly hierarchyProvider = this.dialogData.hierarchyProvider;
 
+
+  protected readonly availableModifiers = signal<HpoTermMinimal[]>([]);
+
+  constructor() {
+    this.dialogData.availableModifiers()
+      .then(modifiers => this.availableModifiers.set(modifiers))
+      .catch(err => this.notificationService.showError(`Failed to load modifiers: ${err}`));
+  }
 
 
   ngOnDestroy(): void {

@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FenominalSentence, HierarchyMapItem, NotificationService, OntologyMatch, PhenopacketLoaderComponent, PolishedHpoAnnotation } from 'ng-hpo-uikit';
+import { FenominalSentence, HierarchyMapItem, HpoTermMinimal, NotificationService, OntologyMatch, PhenopacketLoaderComponent, PolishedHpoAnnotation } from 'ng-hpo-uikit';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { from, Observable } from 'rxjs';
 import { ConfigService } from '../services/config-service';
@@ -66,6 +66,10 @@ export class NewPpktComponent {
     return from(this.configService.getAutocompleteHpo(query));
   };
 
+  private readonly availableModifiers = (): Promise<HpoTermMinimal[]> => {
+    return this.configService.getHpoModifiers();
+  };
+
  
 
   protected openCurationWizard(): void {
@@ -78,6 +82,7 @@ export class NewPpktComponent {
         mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
         searchProvider: this.hpoSearchProvider,
         hierarchyProvider: this.fetchHpoHierarchy,
+        availableModifiers: this.availableModifiers
       }
     });
 
