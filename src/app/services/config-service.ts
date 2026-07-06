@@ -50,5 +50,9 @@ export class ConfigService {
     return invoke<HpoTermMinimal[]>('get_hpo_modifiers');
   }
 
+  async performHpoAutocomplete(query: string): Promise<OntologyMatch[]> {
+    return invoke<OntologyMatch[]>('perform_hpo_autocomplete', { query });
+  }
+
   
 }

@@ -1,6 +1,6 @@
 {
   "name": "phenoblendtk",
-  "version": "0.1.14",
+  "version": "0.2.2",
   "scripts": {
     "ng": "ng",
     "start": "nx serve phenoblendtk --port 1420",
@@ -21,7 +21,7 @@
     "format:fix": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
+    "docs:preview": "vitepress preview docs"
   },
   "private": true,
   "dependencies": {
@@ -91,7 +91,7 @@
     "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.60.1",
-     "vitepress": "^1.6.4"
+    "vitepress": "^1.6.4"
   },
   "overrides": {
     "@module-federation/dts-plugin": {

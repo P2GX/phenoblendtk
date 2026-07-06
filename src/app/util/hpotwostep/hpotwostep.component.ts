@@ -11,10 +11,10 @@ import { Observable } from 'rxjs/internal/Observable';
 
 
 export interface HpoTwostepData {
-  searchProvider: (query: string) => Observable<OntologyMatch[]>;
   mineTextProvider: (text: string) => Promise<FenominalSentence[]>;
   hierarchyProvider: (termId: string) => Promise<HierarchyMapItem>;
   availableModifiers: () => Promise<HpoTermMinimal[]>;
+  autocompleteProvider: (query: string) => Observable<OntologyMatch[]>;
 }
 
 @Component({
@@ -35,9 +35,9 @@ export class HpoTwostepComponent implements OnDestroy {
   protected currentStep = signal<1 | 2>(1);
   protected curatedSentences = signal<FenominalSentence[]>([]);
   private readonly dialogData = inject<HpoTwostepData>(MAT_DIALOG_DATA);
-  protected readonly searchProvider = this.dialogData.searchProvider;
   protected readonly mineTextProvider = this.dialogData.mineTextProvider; 
   protected readonly hierarchyProvider = this.dialogData.hierarchyProvider;
+  protected readonly autocompleteProvider = this.dialogData.autocompleteProvider;
 
 
   protected readonly availableModifiers = signal<HpoTermMinimal[]>([]);

@@ -165,6 +165,12 @@ impl PhenoblendSingleton {
         ga4ghphetools::hpo::get_modifiers(hpo.clone())
     }
 
+    pub fn perform_hpo_autocomplete(&self, query: String) -> Result<Vec<OntologyMatch>, String> {
+        let autocompleter = self.autocompleter.as_ref().ok_or_else(|| "Autocomplete not initialized".to_string())?;
+        let n_term_limit = 20;
+        Ok(autocompleter.search_hpo(&query, n_term_limit))
+    }
+
 }
 
 
@@ -185,7 +191,9 @@ impl Default for PhenoblendSingleton {
             autocompleter: None
         };
        if let Some(ontology) = settings.get_hp_json_path().ok().and_then(|path| load_ontology(&path).ok()) {
-            singleton.hpo = Some(ontology);
+            singleton.hpo = Some(ontology.clone());
+            let ac = AutoCompleter::new(ontology.clone());
+            singleton.autocompleter = Some(ac);
         } else {
             println!("Did not get ontology");
             println!("Oath: {:?}", settings.get_hp_json_path());

@@ -2,11 +2,16 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FenominalSentence, HierarchyMapItem, HpoTermMinimal, NotificationService, OntologyMatch, PhenopacketLoaderComponent, PolishedHpoAnnotation } from 'ng-hpo-uikit';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { from, Observable } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ConfigService } from '../services/config-service';
 import { HpoTwostepComponent } from '../util/hpotwostep/hpotwostep.component';
-import { firstValueFrom } from 'rxjs';
 import { OnsetInputDialogComponent } from '../util/onset/onset-input-dialog.component';
+
+
+
+
+export type OntologySearchProvider = (query: string) => Observable<OntologyMatch[]>;
 
 
 export interface FenominalMiningInterface {
@@ -70,7 +75,11 @@ export class NewPpktComponent {
     return this.configService.getHpoModifiers();
   };
 
- 
+   selectedHpoTerm: OntologyMatch | null = null;
+
+   async handleSelection(match: OntologyMatch) {
+    this.selectedHpoTerm = match;
+  }
 
   protected openCurationWizard(): void {
     const dialogRef = this.dialog.open(HpoTwostepComponent, {
@@ -80,7 +89,7 @@ export class NewPpktComponent {
       disableClose: true,
       data: {
         mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
-        searchProvider: this.hpoSearchProvider,
+        autocompleteProvider: (query: string) =>  this.performHpoAutocomplete(query),
         hierarchyProvider: this.fetchHpoHierarchy,
         availableModifiers: this.availableModifiers
       }
@@ -110,6 +119,15 @@ export class NewPpktComponent {
       return data;
     });
   };
+
+  protected performHpoAutocomplete(query: string): Observable<OntologyMatch[]> {
+  return from(this.configService.performHpoAutocomplete(query)).pipe(
+    catchError(err => {
+      this.notificationService.showError(String(err));
+      return of([]); // fail gracefully — empty results, not a broken autocomplete
+    })
+  );
+}
 
    
 

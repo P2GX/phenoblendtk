@@ -47,7 +47,8 @@ pub fn run() {
             load_hpo,
             load_hpoas,
             load_gene_disease_associations,
-            mine_clinical_text
+            mine_clinical_text,
+            perform_hpo_autocomplete
         ])
         .setup(|app| {
             Ok(())
@@ -278,3 +279,12 @@ async fn get_hpo_modifiers(
     Ok(duplets.into_iter().map(HpoTermMinimalDto::from).collect())
 }
 
+
+
+
+#[tauri::command]
+async fn perform_hpo_autocomplete(state: tauri::State<'_, Arc<AppState>>, query: String) -> Result<Vec<OntologyMatch>, String> {
+    let singleton = state.phenoblendtk.lock()
+        .map_err(|_| "Failed to lock state".to_string())?;
+    singleton.perform_hpo_autocomplete(query)
+}

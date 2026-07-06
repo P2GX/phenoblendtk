@@ -20,7 +20,7 @@
       } @else if (currentStep() === 2 && curatedSentences().length > 0) {
         <hpo-polishing-workspace
           [sentences]="curatedSentences()"
-          [searchProvider]="searchProvider"
+          [autocompleteProvider]="autocompleteProvider"
           [hierarchyProvider]="hierarchyProvider"
           [availableModifiers]="availableModifiers()"
           (complete)="onCurationComplete($event)"
