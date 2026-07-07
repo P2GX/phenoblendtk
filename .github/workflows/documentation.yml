@@ -28,9 +28,6 @@ jobs:
       - name: Build Documentation Site
         run: npm run docs:build
 
-      - name: Compile Angular Library Distribution
-        run: npx ng build phenoblendtk --configuration production
-
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

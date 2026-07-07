@@ -45,7 +45,17 @@
                 type="checkbox"
                 [checked]="isDiseaseSelected(entry, assoc.diseaseId)"
                 (change)="toggleDisease(entry.geneSymbol, assoc.diseaseId)">
-              <span class="disease-label">{{ assoc.diseaseId }}</span>
+              <li class="disease-checklist-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    [checked]="isDiseaseSelected(entry, assoc.diseaseId)"
+                    (change)="toggleDisease(entry.geneSymbol, assoc.diseaseId)">
+                  <span class="disease-label">{{ assoc.diseaseModel?.omimDiseaseName ?? assoc.diseaseId }}</span>
+                  <small class="disease-id">{{ assoc.diseaseId }}</small>
+                  <small class="association-type">{{ assoc.associationType }}</small>
+                </label>
+              </li>
               <small class="association-type">{{ assoc.associationType }}</small>
             </label>
           </li>

@@ -179,6 +179,9 @@ impl PhenoblendSingleton {
         let map = self.gene_to_disease_d
             .as_ref()
             .ok_or_else(|| "Gene-to-disease map not initialized".to_string())?;
+        let disease_map = self.omim_disease_models
+            .as_ref()
+            .ok_or_else(|| "disease models map n ot initialized!".to_string())?;
 
         let trimmed = query.trim();
         if trimmed.is_empty() {
@@ -192,6 +195,17 @@ impl PhenoblendSingleton {
             .filter(|(gene_symbol, _)| gene_symbol.to_lowercase().starts_with(&query_lower))
             .flat_map(|(_, associations)| associations.iter().cloned())
             .collect();
+
+        for m in &mut matches {
+            match disease_map.get(&m.disease_id) {
+                Some(simple_disease) => {
+                    m.disease_model = Some(simple_disease.clone());
+                }
+                None => {
+                    m.disease_model = Some(SimpleDiseaseModel::from_id(m.disease_id.clone()));
+                }
+            }
+        }
 
         matches.sort_by(|a, b| {
             a.gene_symbol.cmp(&b.gene_symbol)

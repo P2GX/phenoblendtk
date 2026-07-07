@@ -49,12 +49,13 @@ pub fn load_gene_disease_associations<P: AsRef<Path>>(
                 "Failed to parse OMIM disease_id '{}': {}", row.disease_id, e
             ))
         })?;
-
+        // We will add the OMIM label for autocomplete searches later on, for now we set to None
         let record = GeneDiseaseAssociation {
             ncbi_gene_id: row.ncbi_gene_id,
             gene_symbol: row.gene_symbol.clone(),
             association_type: row.association_type,
             disease_id,
+            disease_model: None,
             source: row.source,
         };
 
