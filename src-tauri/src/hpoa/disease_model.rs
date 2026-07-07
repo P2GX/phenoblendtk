@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde::de::Error;
 use ontolius::{Identified, TermId};
 
@@ -32,17 +32,14 @@ impl SimpleDiseaseModel {
 }
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GeneDiseaseAssociation {
-    #[serde(rename = "ncbi_gene_id")]
     pub ncbi_gene_id: String,
-    #[serde(rename = "gene_symbol")]
     pub gene_symbol: String,
-    #[serde(rename = "association_type")]
     pub association_type: String,
-    #[serde(rename = "disease_id", deserialize_with = "parse_term_id")]
+    #[serde(deserialize_with = "parse_term_id", serialize_with="serialize_term_id")]
     pub disease_id: TermId, 
-    #[serde(rename = "source")]
     pub source: String,
 }
 
@@ -57,4 +54,27 @@ where
         D::Error::custom(format!("Failed to parse TermId from string '{}': {}", s, e))
     })?;
     Ok(tid) // Or TermId::new(s) depending on your implementation
+}
+
+fn serialize_term_id<S>(term_id: &TermId, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&term_id.to_string())
+}
+
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneModel {
+    pub gene_symbol: String,
+    pub associations: Vec<GeneDiseaseAssociation>
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CaseModel {
+    pub case_id: String,
+    pub gene_models: Vec<GeneModel>
+
 }

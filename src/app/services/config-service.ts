@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { PresenceMatrixPayload } from '../models/viz_dto';
 import { FenominalSentence, HierarchyMapItem, OntologyMatch, HpoTermMinimal } from 'ng-hpo-uikit';
 import { InitializationStatusDto } from '../models/status_dto'; 
+import { GeneDiseaseAssociation } from '../models/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -54,5 +55,8 @@ export class ConfigService {
     return invoke<OntologyMatch[]>('perform_hpo_autocomplete', { query });
   }
 
+  async  autocompleteGeneSymbol(query: string): Promise<GeneDiseaseAssociation[]> {
+    return invoke<GeneDiseaseAssociation[]>('autocomplete_gene_symbol', { query });
+  }
   
 }

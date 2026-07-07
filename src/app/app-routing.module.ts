@@ -3,6 +3,7 @@ import { HomeComponent } from './home/home.component';
 import { NewPpktComponent } from './newppkt/newppkt.component';
 import { PresenceVisualizerComponent } from './visualize/visualize.component';
 import { HpoTwostepComponent } from './util/hpotwostep/hpotwostep.component';
+import { GeneDiseaseComponent } from './util/genedisease/genedisease.component';
 
 
 export const appRoutes: Routes = [
@@ -10,7 +11,7 @@ export const appRoutes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'newppkt', component: NewPpktComponent },
   { path: 'visualize', component: PresenceVisualizerComponent },
-  { path: 'hpotwostep', component: NewPpktComponent },
+  { path: 'genedisease', component: GeneDiseaseComponent },
   
   
   // The wildcard safety net stays at the bottom

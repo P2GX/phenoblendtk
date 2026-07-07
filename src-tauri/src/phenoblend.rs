@@ -171,6 +171,38 @@ impl PhenoblendSingleton {
         Ok(autocompleter.search_hpo(&query, n_term_limit))
     }
 
+    /// Returns all GeneDiseaseAssociation entries for genes whose symbol
+    /// starts with `query` (case-insensitive). Since a single gene symbol
+    /// can map to multiple diseases, and a query can match multiple gene
+    /// symbols, results are flattened across both dimensions.
+    pub fn autocomplete_gene_symbol(&self, query: &str, limit: usize) -> Result<Vec<GeneDiseaseAssociation>, String> {
+        let map = self.gene_to_disease_d
+            .as_ref()
+            .ok_or_else(|| "Gene-to-disease map not initialized".to_string())?;
+
+        let trimmed = query.trim();
+        if trimmed.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let query_lower = trimmed.to_lowercase();
+
+        let mut matches: Vec<GeneDiseaseAssociation> = map
+            .iter()
+            .filter(|(gene_symbol, _)| gene_symbol.to_lowercase().starts_with(&query_lower))
+            .flat_map(|(_, associations)| associations.iter().cloned())
+            .collect();
+
+        matches.sort_by(|a, b| {
+            a.gene_symbol.cmp(&b.gene_symbol)
+                .then_with(|| a.disease_id.to_string().cmp(&b.disease_id.to_string()))
+        });
+
+        matches.truncate(limit);
+
+        Ok(matches)
+    }
+
 }
 
 

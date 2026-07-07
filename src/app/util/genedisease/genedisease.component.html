@@ -1,0 +1,38 @@
+<h1>Gene disease</h1>
+
+<mat-form-field appearance="outline">
+  <mat-label>Gene symbol</mat-label>
+
+  <input
+    matInput
+    [(ngModel)]="geneSymbol"
+    (keyup.enter)="search()">
+
+</mat-form-field>
+
+<button
+  mat-raised-button
+  color="primary"
+  (click)="search()"
+  [disabled]="loading">
+
+  Search
+</button>
+
+@if (loading) {
+  <p>Loading...</p>
+}
+
+@if (error) {
+  <p>{{ error }}</p>
+}
+
+@if (associations.length > 0) {
+  <ul>
+    @for (association of associations; track association) {
+      <li>
+        {{ association.diseaseId }}
+      </li>
+    }
+  </ul>
+}

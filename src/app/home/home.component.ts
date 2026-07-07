@@ -65,8 +65,17 @@ export class HomeComponent {
     });
 
     g2dMessage = computed(() => {
-      return "G2D message (to do)"
-    })
+      const cancel = this.cancelMessage();
+      const status = this.statusService;
+      if (status.g2dLoaded()) {
+        return "g2d file loaded";
+      } else if (status.g2dLoading()) {
+        return "loading g2d file";
+      } else if (cancel) {
+        return cancel;
+      }
+      return "uninitialized"
+    });
  
   data = "?";
 
@@ -88,6 +97,7 @@ export class HomeComponent {
     }
 
     async loadHpoas(): Promise<void> {
+    
       try {
         await this.configService.loadHpoas();
       } catch (error: unknown) {
@@ -97,17 +107,28 @@ export class HomeComponent {
       } 
     }
 
-     async loadGeneToDisease(): Promise<void> {
-      console.log("loadGeneToDisease")
-      try {
-        await this.configService.loadGeneToDisease();
-        this.notificationService.showSuccess("Loaded gene-to-disease file");
-      } catch (error: unknown) {
-        this.notificationService.showError(
-          `Failed to load Gene to Disease file: ${error instanceof Error ? error.message : error}`
-        );
-      } 
+    async loadGeneToDisease(): Promise<void> {
+    console.log("loadGeneToDisease");
+    console.log("before await");
+
+    try {
+      await this.configService.loadGeneToDisease();
+
+      console.log("after await");
+
+      this.notificationService.showSuccess("Loaded gene-to-disease file");
+    } catch (error) {
+      console.error("Caught error:", error);
+
+      this.notificationService.showError(
+        `Failed to load Gene to Disease file: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
+
+    console.log("function finished");
+  }
 
   
 

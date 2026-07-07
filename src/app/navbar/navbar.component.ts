@@ -11,8 +11,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 export class NavbarComponent implements OnInit{
   tabs = [
     { label: 'Home', path: '/home' },
-    { label: 'Load phenopacket', path: '/newppkt' },
-    { label: 'HPO text mining', path: '/hpotwostep' },
+    { label: 'Load HPO data', path: '/newppkt' },
+    { label: 'Gene/Disease data', path: '/genedisease' },
     { label: 'Visualize', path: '/visualize'}
   ];
 

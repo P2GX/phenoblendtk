@@ -19,6 +19,7 @@ use phenopackets::schema::v2::Phenopacket;
 
 use crate::{blend::dto::PresenceMatrixPayload, phenoblend::PhenoblendSingleton};
 use crate::model::status::InitializationStatusDto;
+use crate::hpoa::disease_model::GeneDiseaseAssociation;
 
 
 struct AppState {
@@ -38,6 +39,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())     
         .invoke_handler(tauri::generate_handler![
+            autocomplete_gene_symbol,
             check_initialization_status,
             get_hpo_autocomplete,
             get_hpo_modifiers,
@@ -167,8 +169,10 @@ async fn load_gene_disease_associations(
                     "g2d-load-event", 
                     OntologyLoadEvent::success("gene to disease loaded".to_string(), n_terms)
                 );
+                println!("emitting g2d");
             },
-            Err(_) => { 
+            Err(e) => { 
+                 eprintln!("Failed to load gene-to-disease associations: {}", e);
                 let _ = app_handle.emit("g2d-load-event", OntologyLoadEvent::cancel());
             }
         }
@@ -287,4 +291,16 @@ async fn perform_hpo_autocomplete(state: tauri::State<'_, Arc<AppState>>, query:
     let singleton = state.phenoblendtk.lock()
         .map_err(|_| "Failed to lock state".to_string())?;
     singleton.perform_hpo_autocomplete(query)
+}
+
+
+#[tauri::command]
+async fn autocomplete_gene_symbol(
+    state: tauri::State<'_, Arc<AppState>>,
+    query: &str,
+) -> Result<Vec<GeneDiseaseAssociation>, String> {
+    let singleton = state.phenoblendtk.lock()
+        .map_err(|_| "Failed to lock state".to_string())?;
+    let limit = 20;
+    singleton.autocomplete_gene_symbol(query, limit)
 }

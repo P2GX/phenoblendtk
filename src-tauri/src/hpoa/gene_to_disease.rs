@@ -2,11 +2,24 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
+use ontolius::TermId;
+use serde::Deserialize;
+
 use crate::util::errors::PhenoblendError;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
 
 
 static OMIM_PREFIX: &str = "OMIM";
+
+
+#[derive(Debug, Deserialize)]
+struct RawGeneDiseaseRow {
+    ncbi_gene_id: String,
+    gene_symbol: String,
+    association_type: String,
+    disease_id: String, 
+    source: String,
+}
 
 pub fn load_gene_disease_associations<P: AsRef<Path>>(
     fpath: P,
@@ -22,13 +35,28 @@ pub fn load_gene_disease_associations<P: AsRef<Path>>(
 
     let mut association_map: HashMap<String, Vec<GeneDiseaseAssociation>> = HashMap::new();
 
-    for result in tsv_reader.deserialize::<GeneDiseaseAssociation>() {
-        let record = result.map_err(|e| {
+    for result in tsv_reader.deserialize::<RawGeneDiseaseRow>() {
+        let row = result.map_err(|e| {
             PhenoblendError::parse_error(format!("TSV deserialization failed: {}", e))
         })?;
-        if record.disease_id.prefix() != *OMIM_PREFIX {
-            continue; // Omit ORPHA and DECIPER
+         // Filter by textual prefix 
+        // ORPHA/DECIPHER rows never need to become a TermId at all.
+        if !row.disease_id.starts_with(OMIM_PREFIX) {
+            continue;
         }
+        let disease_id: TermId = row.disease_id.parse().map_err(|e| {
+            PhenoblendError::parse_error(format!(
+                "Failed to parse OMIM disease_id '{}': {}", row.disease_id, e
+            ))
+        })?;
+
+        let record = GeneDiseaseAssociation {
+            ncbi_gene_id: row.ncbi_gene_id,
+            gene_symbol: row.gene_symbol.clone(),
+            association_type: row.association_type,
+            disease_id,
+            source: row.source,
+        };
 
         // Use the entry API with a clone of the key to position the record in the vector
         association_map

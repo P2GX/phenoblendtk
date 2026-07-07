@@ -1,13 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FenominalSentence, HierarchyMapItem, HpoTermMinimal, NotificationService, OntologyMatch, PhenopacketLoaderComponent, PolishedHpoAnnotation } from 'ng-hpo-uikit';
-import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { from, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ConfigService } from '../services/config-service';
 import { HpoTwostepComponent } from '../util/hpotwostep/hpotwostep.component';
-import { OnsetInputDialogComponent } from '../util/onset/onset-input-dialog.component';
-
+import { Router } from '@angular/router';
 
 
 
@@ -22,11 +21,13 @@ export interface FenominalMiningInterface {
 @Component({
   selector: 'app-new-case',
   standalone: true,
-  imports: [CommonModule, OnsetInputDialogComponent, PhenopacketLoaderComponent],
+  imports: [CommonModule, PhenopacketLoaderComponent],
   templateUrl: './newppkt.component.html',
   styleUrls: ['./newppkt.component.scss']
 })
 export class NewPpktComponent {
+
+  private router = inject(Router);
   readonly isProcessing = signal<boolean>(false);
   readonly statusMessage = signal<string | null>(null);
   readonly errorDetails = signal<string | null>(null);
@@ -121,17 +122,18 @@ export class NewPpktComponent {
   };
 
   protected performHpoAutocomplete(query: string): Observable<OntologyMatch[]> {
-  return from(this.configService.performHpoAutocomplete(query)).pipe(
-    catchError(err => {
-      this.notificationService.showError(String(err));
-      return of([]); // fail gracefully — empty results, not a broken autocomplete
-    })
-  );
-}
+    return from(this.configService.performHpoAutocomplete(query)).pipe(
+      catchError(err => {
+        this.notificationService.showError(String(err));
+        return of([]); // fail gracefully — empty results, not a broken autocomplete
+      })
+    );
+  }
 
    
 
   private proceedToNextWindow(observedTerms: any[]): void {
-    this.notificationService.showSuccess("TODO implement proceed to next")
+    this.notificationService.showSuccess("TODO implement proceed to next");
+    this.router.navigate(['/pttemplate']);
   }
 }
