@@ -1,60 +1,150 @@
-
-import { Component, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, computed } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { startWith, debounceTime, switchMap, from, of, catchError } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-
+import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { CommonModule } from '@angular/common';
 import { GeneDiseaseAssociation } from '../../models/interfaces';
 import { AnnotationService } from '../../services/annotation-service';
+import { Router } from '@angular/router';
+
+interface GeneEntry {
+  geneSymbol: string;
+  associations: GeneDiseaseAssociation[];
+  selectedDiseaseIds: ReadonlySet<string>;
+}
 
 @Component({
   selector: 'genedisease',
   standalone: true,
-  imports: [ 
+  imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatIconModule,
+    MatAutocompleteModule
   ],
-    templateUrl: './genedisease.component.html',
+  templateUrl: './genedisease.component.html',
   styleUrls: ['./genedisease.component.scss']
 })
 export class GeneDiseaseComponent {
- 
   private readonly annotationService = inject(AnnotationService);
+  private readonly router = inject(Router);
 
-  geneSymbol = '';
+  protected control = new FormControl<string>('', { nonNullable: true });
 
-  associations: GeneDiseaseAssociation[] = [];
+  private searchResults = toSignal(
+    this.control.valueChanges.pipe(
+      startWith(this.control.value),
+      debounceTime(300),
+      switchMap(query => {
+        const trimmed = query.trim();
+        if (trimmed.length < 2) {
+          return of<GeneDiseaseAssociation[]>([]);
+        }
+        return from(this.annotationService.autocompleteGeneSymbol(trimmed)).pipe(
+          catchError(err => {
+            console.error('Gene autocomplete failed:', err);
+            return of<GeneDiseaseAssociation[]>([]);
+          })
+        );
+      })
+    ),
+    { initialValue: [] as GeneDiseaseAssociation[] }
+  );
 
-  loading = false;
+  // Distinct gene symbols for the dropdown — backend returns one row per
+  // gene+disease pair, so the same gene symbol can appear many times.
+  protected geneSymbolOptions = computed(() => {
+    const seen = new Set<string>();
+    const symbols: string[] = [];
+    for (const assoc of this.searchResults()) {
+      if (!seen.has(assoc.geneSymbol)) {
+        seen.add(assoc.geneSymbol);
+        symbols.push(assoc.geneSymbol);
+      }
+    }
+    return symbols;
+  });
 
-  error?: string;
+  protected geneEntries = signal<GeneEntry[]>([]);
 
-  async search(): Promise<void> {
-    const query = this.geneSymbol.trim();
-    console.log("u", query);
-    if (!query) {
-      this.associations = [];
-      return;
+  protected onGeneSelected(event: MatAutocompleteSelectedEvent): void {
+    const geneSymbol = event.option.value as string;
+    this.addGene(geneSymbol);
+    this.control.setValue('');
+  }
+
+  private addGene(geneSymbol: string): void {
+    if (this.geneEntries().some(e => e.geneSymbol === geneSymbol)) {
+      return; // already added — no duplicates
     }
 
-    this.loading = true;
-    this.error = undefined;
+    const associations = this.searchResults().filter(a => a.geneSymbol === geneSymbol);
+    const entry: GeneEntry = {
+      geneSymbol,
+      associations,
+      selectedDiseaseIds: new Set()
+    };
+    this.geneEntries.update(entries => [...entries, entry]);
+  }
 
-    try {
-      this.associations =
-        await this.annotationService.autocompleteGeneSymbol(query);
-    } catch (e) {
-      console.error(e);
-      this.error = 'Unable to retrieve gene information.';
-      this.associations = [];
-    } finally {
-      this.loading = false;
+  protected toggleDisease(geneSymbol: string, diseaseId: string): void {
+    this.geneEntries.update(entries =>
+      entries.map(e => {
+        if (e.geneSymbol !== geneSymbol) return e;
+        const next = new Set(e.selectedDiseaseIds);
+        next.has(diseaseId) ? next.delete(diseaseId) : next.add(diseaseId);
+        return { ...e, selectedDiseaseIds: next };
+      })
+    );
+  }
+
+  protected isDiseaseSelected(entry: GeneEntry, diseaseId: string): boolean {
+    return entry.selectedDiseaseIds.has(diseaseId);
+  }
+
+  protected selectAllDiseases(geneSymbol: string): void {
+    this.geneEntries.update(entries =>
+      entries.map(e => {
+        if (e.geneSymbol !== geneSymbol) return e;
+        return { ...e, selectedDiseaseIds: new Set(e.associations.map(a => a.diseaseId)) };
+      })
+    );
+  }
+
+  protected clearAllDiseases(geneSymbol: string): void {
+    this.geneEntries.update(entries =>
+      entries.map(e => (e.geneSymbol === geneSymbol ? { ...e, selectedDiseaseIds: new Set() } : e))
+    );
+  }
+
+  protected removeGene(geneSymbol: string): void {
+    this.geneEntries.update(entries => entries.filter(e => e.geneSymbol !== geneSymbol));
+  }
+
+   protected readonly hasAnySelection = computed(() =>
+    this.geneEntries().some(e => e.selectedDiseaseIds.size > 0)
+  );
+
+  protected goToVisualization(): void {
+    const byGene = new Map<string, GeneDiseaseAssociation[]>();
+
+    for (const entry of this.geneEntries()) {
+      const chosen = entry.associations.filter(a => entry.selectedDiseaseIds.has(a.diseaseId));
+      if (chosen.length > 0) {
+        byGene.set(entry.geneSymbol, chosen);
+      }
     }
+
+    this.annotationService.setSelectedAssociations(byGene);
+    this.router.navigate(['/visualize']);
   }
 
 }

@@ -1,38 +1,67 @@
-<h1>Gene disease</h1>
+<div class="genedisease-workspace">
+  <h1>Genes and associated diseases</h1>
 
-<mat-form-field appearance="outline">
-  <mat-label>Gene symbol</mat-label>
+  <mat-form-field appearance="outline" class="gene-search-field">
+    <mat-label>Search gene symbol</mat-label>
+    <input
+      matInput
+      [formControl]="control"
+      [matAutocomplete]="auto"
+      placeholder="e.g. LZTR1"
+      spellcheck="false"
+      autocomplete="off">
 
-  <input
-    matInput
-    [(ngModel)]="geneSymbol"
-    (keyup.enter)="search()">
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onGeneSelected($event)">
+      @for (symbol of geneSymbolOptions(); track symbol) {
+        <mat-option [value]="symbol">{{ symbol }}</mat-option>
+      } @empty {
+        <mat-option disabled>No matching genes</mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
 
-</mat-form-field>
+  @if (geneEntries().length === 0) {
+    <p class="empty-state">No genes added yet. Search above to add one.</p>
+  }
 
-<button
-  mat-raised-button
-  color="primary"
-  (click)="search()"
-  [disabled]="loading">
+  @for (entry of geneEntries(); track entry.geneSymbol) {
+    <div class="gene-entry-card">
+      <div class="gene-entry-header">
+        <h2>{{ entry.geneSymbol }}</h2>
+        <div class="gene-entry-actions">
+          <button mat-button (click)="selectAllDiseases(entry.geneSymbol)">Select all</button>
+          <button mat-button (click)="clearAllDiseases(entry.geneSymbol)">Clear</button>
+          <button mat-icon-button (click)="removeGene(entry.geneSymbol)" aria-label="Remove gene">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
 
-  Search
-</button>
-
-@if (loading) {
-  <p>Loading...</p>
-}
-
-@if (error) {
-  <p>{{ error }}</p>
-}
-
-@if (associations.length > 0) {
-  <ul>
-    @for (association of associations; track association) {
-      <li>
-        {{ association.diseaseId }}
-      </li>
-    }
-  </ul>
-}
+      <ul class="disease-checklist">
+        @for (assoc of entry.associations; track assoc.diseaseId) {
+          <li class="disease-checklist-item">
+            <label>
+              <input
+                type="checkbox"
+                [checked]="isDiseaseSelected(entry, assoc.diseaseId)"
+                (change)="toggleDisease(entry.geneSymbol, assoc.diseaseId)">
+              <span class="disease-label">{{ assoc.diseaseId }}</span>
+              <small class="association-type">{{ assoc.associationType }}</small>
+            </label>
+          </li>
+        } @empty {
+          <li class="disease-checklist-empty">No known disease associations.</li>
+        }
+      </ul>
+    </div>
+  }
+  <div class="workspace-footer">
+    <button
+      mat-raised-button
+      color="primary"
+      [disabled]="!hasAnySelection()"
+      (click)="goToVisualization()">
+      Next: Visualize
+    </button>
+  </div>
+</div>

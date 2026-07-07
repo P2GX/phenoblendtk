@@ -114,8 +114,8 @@ async fn load_hpo(
                     OntologyLoadEvent::success("HPO loaded".to_string(), n_terms)
                 );
             },
-            Err(_) => { 
-                let _ = app_handle.emit("hpo-load-event", OntologyLoadEvent::cancel());
+            Err(e) => { 
+                let _ = app_handle.emit("hpo-load-event", OntologyLoadEvent::error(e.to_string()));
             }
         }
     });
@@ -142,8 +142,8 @@ async fn load_hpoas(
                     OntologyLoadEvent::success("HPOAs loaded".to_string(), n_terms)
                 );
             },
-            Err(_) => { 
-                let _ = app_handle.emit("hpoa-load-event", OntologyLoadEvent::cancel());
+            Err(e) => { 
+                let _ = app_handle.emit("hpoa-load-event", OntologyLoadEvent::error(e.to_string()));
             }
         }
     });
@@ -172,8 +172,7 @@ async fn load_gene_disease_associations(
                 println!("emitting g2d");
             },
             Err(e) => { 
-                 eprintln!("Failed to load gene-to-disease associations: {}", e);
-                let _ = app_handle.emit("g2d-load-event", OntologyLoadEvent::cancel());
+                let _ = app_handle.emit("g2d-load-event", OntologyLoadEvent::error(e.to_string()));
             }
         }
     });
