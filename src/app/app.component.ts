@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NavbarComponent } from './navbar/navbar.component';
 import { FooterComponent } from 'ng-hpo-uikit';
 import { RouterOutlet } from '@angular/router';
 import { open as openExternalBrowser } from '@tauri-apps/plugin-shell';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 
 @Component({
@@ -17,8 +18,19 @@ import { open as openExternalBrowser } from '@tauri-apps/plugin-shell';
 
 ]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 
+  async ngOnInit() {
+      const appWindow = getCurrentWindow();
+      
+      // Listen for the event emitted by Rust backend
+      await appWindow.listen('close-requested', async () => {
+        // 1. Optional: Add an unsaved changes check here if needed
+        // 2. Destroy the window cleanly from the frontend
+        await appWindow.destroy();
+      });
+    }
+  
   handleHelpNavigation() {
     this.handleExternalNavigation("https://github.com/P2GX/phenoblendtk");
   }
