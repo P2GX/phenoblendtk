@@ -46,7 +46,7 @@ impl PhenoblendSingleton {
 
     pub fn set_hpoa_d(&mut self, hpoa_d: HashMap<TermId, SimpleDiseaseModel>, hpoa_path: &str) {
         self.omim_disease_models = Some(hpoa_d);
-        self.calculate_disease_counts();
+        let _ = self.calculate_disease_counts();
         let _ = self.settings.set_hpoa_path(hpoa_path);
     }
     
@@ -96,16 +96,21 @@ impl PhenoblendSingleton {
         Ok(())
     }
 
-    pub fn calculate_presence_matrix(&mut self) -> Result<PresenceMatrixPayload, String> {
+    pub fn calculate_presence_matrix(
+        &mut self, 
+        annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
+    ) -> Result<PresenceMatrixPayload, String> {
         let hpo = self.hpo.as_ref()
             .ok_or_else(|| "Missing required resource: HPO Ontology".to_string())?;
-        let omim = self.omim_disease_models.as_ref()
-            .ok_or_else(|| "Missing required resource: OMIM Disease Models".to_string())?;
-        let gene_to_disease = self.gene_to_disease_d.as_ref()
-            .ok_or_else(|| "Missing required resource: Gene-to-Disease Associations".to_string())?;
+        
         let proband = self.individual.clone();
         
-        let pm = crate::blend::presence_matrix::calculate_presence_matrix(hpo.clone(), omim, gene_to_disease, &self.disease_count_d, proband)?;
+        let pm = crate::blend::presence_matrix::calculate_presence_matrix(
+            hpo.clone(), 
+            &annotations, 
+            &self.disease_count_d, 
+            proband)?;
+        println!("calculate_presence_matrix pm={:?}", pm);
         Ok(crate::blend::presence_matrix::sort_presence_payload(pm))
     }
 

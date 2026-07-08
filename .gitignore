@@ -3,3 +3,4 @@ src-tauri/target/
 .angular/
 .nx/
 src-tauri/gen/
+.vscode/

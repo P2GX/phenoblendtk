@@ -2,11 +2,13 @@ import { Component, ViewChild, signal, computed, inject } from '@angular/core';
 // Assuming you create or have these placeholders ready for the other two:
 // import { NetworkGraphComponent } from './network-graph.component';
 // import { DistributionBarComponent } from './distribution-bar.component';
-import { invoke } from '@tauri-apps/api/core';
 import * as d3 from 'd3';
 import { PresenceMatrixComponent } from './presence-matrix/presence-matrix.component';
 import { PresenceMatrixPayload } from '../models/viz_dto';
 import { ConfigService } from '../services/config-service';
+import { AnnotationService } from '../services/annotation-service';
+import { GeneDiseaseAssociation } from '../models/interfaces';
+import { NotificationService } from 'ng-hpo-uikit';
 
 // 1. Define a literal type for your 3 view modes
 type VisualizationType = 'matrix' | 'network' | 'bar';
@@ -22,6 +24,8 @@ export class PresenceVisualizerComponent {
   @ViewChild('matrixComponent') private childMatrix!: PresenceMatrixComponent;
 
   private configService = inject(ConfigService);
+  private annotationService = inject(AnnotationService);
+  private notificationService = inject(NotificationService);
 
   readonly matrixData = signal<PresenceMatrixPayload | null>(null);
   readonly isLoading = signal<boolean>(false);
@@ -45,7 +49,16 @@ export class PresenceVisualizerComponent {
   async reloadMatrixData(): Promise<void> {
     this.isLoading.set(true);
     try {
-      const result = await this.configService.getPresenceMatrix();
+      const selectedAnnotations: GeneDiseaseAssociation[] = this.annotationService.allSelectedAssociations();
+      if (selectedAnnotations.length < 2) {
+        const errMsg = `At least two gene/disease pairs required to perform analysis but only {selectedAnnotations.length} available.`;
+        this.notificationService.showError(errMsg);
+        return;
+      }
+      const recordData = Object.fromEntries(this.annotationService.selectedAssociations());
+      console.log("GOT RECORD DARA", recordData);
+      const result = await this.configService.getPresenceMatrix(recordData);
+      console.log("PresenceMatrixData", result);
       this.matrixData.set(result);
     } catch (err) {
       console.error('Failed fetching matrix values:', err);

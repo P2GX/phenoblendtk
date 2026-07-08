@@ -8,6 +8,7 @@ use ontolius::ontology::OntologyTerms;
 use ontolius::term::MinimalTerm;
 use ontolius::{TermId, ontology::csr::FullCsrOntology};
 
+use crate::blend::disease_gene_entity::GeneDiseaseEntity;
 use crate::blend::dto::PresenceMatrixItem;
 use crate::blend::dto::PresenceMatrixPayload;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
@@ -127,67 +128,34 @@ fn calculate_for_genes(proband: Proband, hpo: Arc<FullCsrOntology>,
 
 pub fn calculate_presence_matrix(
     hpo: Arc<FullCsrOntology>,
-    omim_disease_models: &HashMap<TermId, SimpleDiseaseModel>,
-    gene_to_disease_d: &HashMap<String, Vec<GeneDiseaseAssociation>>,
+    annotation_map: &HashMap<String, Vec<GeneDiseaseAssociation>>,
     disease_counts: &HashMap<TermId, usize>,
     proband: Proband
 ) -> Result<PresenceMatrixPayload, String> {
-    let mut entities: Vec<String> = Vec::new();
-    if proband.gene_list.len() >= 2 {
-        entities = proband.gene_list.clone();
-    } else if proband.disease_list.len() >= 2 {
-        entities = proband.disease_list
-            .iter()
-            .map(|disease| disease.term_id_as_string()) 
-            .collect();
-    } else {
-        return Err(format!("Did not find suffient diseases/genes for analysis"));
+    let observed_hpos = proband.observed_hpos.clone();
+    let mut gd_entry_list: Vec<GeneDiseaseEntity> = Vec::new();
+    for (symbol, gda_list) in annotation_map.into_iter() {
+        let gd_entity =   GeneDiseaseEntity::new(gda_list)?;
+        gd_entry_list.push(gd_entity);
     }
-    let mut loaded_entities = Vec::new();
-    // for now assume genes TODO GENERALIZE
-    for symbol in &entities {
-        let ent = get_gene_entity(symbol, hpo.clone(), omim_disease_models, gene_to_disease_d)?;
-        loaded_entities.push(ent);
-    }
+    // Now we have one gene disease entry for each gene. This entry contains
+    // HPOs for all of the gene-associated diseases that the user chose in the GUI
+    println!("gd entities {:?}", gd_entry_list);
+    let payload: PresenceMatrixPayload = GeneDiseaseEntity::get_presence_matrix_payload(
+        proband,
+        &gd_entry_list,
+        disease_counts,
+        hpo.clone()
+    );
 
-    let mut rows = Vec::new();
-    // 3. Score every query HPO term across all entities
-    for query_hpo in &proband.observed_hpos {
-        let mut scores = HashMap::new();
-
-        for entity in &loaded_entities {
-            let mut score = 0.0;
-
-            // Check for perfect match (entity has an annotation equal to or a descendant of query_hpo)
-            let is_perfect = entity.is_perfect_match(query_hpo);
-            if is_perfect {
-                score = 1.0;
-            } else {
-                score = entity.get_partial_match_score(query_hpo, hpo.clone(), disease_counts);
-            }
-            scores.insert(entity.label.clone(), score);
-        }
-
-        rows.push(PresenceMatrixItem {
-            hpo_id: query_hpo.to_string(),
-            hpo_name: hpo.term_by_id(query_hpo).map(|t| t.name().to_string()).unwrap_or_else(|| query_hpo.to_string()),
-            scores,
-        });
-    }
-
-    // TODO  Implement your row/column sorting logic on `entities` and `rows` here before returning
-
-    Ok(PresenceMatrixPayload {
-        entities: entities,
-        columns: rows,
-    })
+    Ok(payload)
 }
 
 
 
 /// Sorts the columns (gene entities) and rows (PresenceMatrixItem) following the explicit 
 /// hierarchal block rules established in the Python pipeline.
-pub fn sort_presence_payload(mut payload: PresenceMatrixPayload) -> PresenceMatrixPayload {
+pub fn sort_presence_payload(payload: PresenceMatrixPayload) -> PresenceMatrixPayload {
     if payload.entities.is_empty() || payload.columns.is_empty() {
         return payload;
     }

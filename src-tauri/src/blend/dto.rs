@@ -29,6 +29,10 @@ impl PresenceMatrixItem {
     pub fn add_perfect_match(&mut self, entity: &str) {
         self.scores.insert(entity.to_string(), 1.0);
     }
+
+    pub fn add_match(&mut self, entity: &str, score: f64) {
+        self.scores.insert(entity.to_string(), score);
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

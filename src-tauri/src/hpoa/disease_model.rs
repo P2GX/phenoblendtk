@@ -2,38 +2,27 @@ use std::collections::HashSet;
 use serde::{Deserialize, Serialize, Serializer};
 use serde::de::Error;
 use ontolius::{Identified, TermId};
+use crate::util::serde_util::*;
 
-
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SimpleDiseaseModel {
-    #[serde(serialize_with = "serialize_term_id")]
+    #[serde(
+        serialize_with = "serialize_term_id", 
+        deserialize_with = "parse_term_id"
+    )]
     pub omim_disease_id: TermId,
     pub omim_disease_name: String,
-     #[serde(serialize_with = "serialize_term_id_set")]
+     #[serde(
+        serialize_with = "serialize_term_id_set",
+        deserialize_with = "deserialize_term_id_set")]
     pub observed_hpo_ids: HashSet<TermId>,
-    #[serde(serialize_with = "serialize_term_id_set")]
+     #[serde(
+        serialize_with = "serialize_term_id_set",
+        deserialize_with = "deserialize_term_id_set")]
     excluded_hpo_ids: HashSet<TermId>
 }
 
-fn serialize_term_id<S>(term_id: &TermId, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&term_id.to_string())
-}
-
-fn serialize_term_id_set<S>(term_ids: &HashSet<TermId>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    use serde::ser::SerializeSeq;
-    let mut seq = serializer.serialize_seq(Some(term_ids.len()))?;
-    for id in term_ids {
-        seq.serialize_element(&id.to_string())?;
-    }
-    seq.end()
-}
 
 impl SimpleDiseaseModel {
     pub fn new(omim_disease_id: TermId,
@@ -65,7 +54,7 @@ impl SimpleDiseaseModel {
 }
 
 
-#[derive(Clone, Debug,  Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GeneDiseaseAssociation {
     pub ncbi_gene_id: String,
@@ -78,15 +67,4 @@ pub struct GeneDiseaseAssociation {
 }
 
 
-// Custom deserializer helper function if needed:
-fn parse_term_id<'de, D>(deserializer: D) -> Result<TermId, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    let tid: TermId = s.parse().map_err(|e| {
-        D::Error::custom(format!("Failed to parse TermId from string '{}': {}", s, e))
-    })?;
-    Ok(tid) // Or TermId::new(s) depending on your implementation
-}
 

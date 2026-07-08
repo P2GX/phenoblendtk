@@ -27,8 +27,8 @@ export class ConfigService {
     return await invoke("ingest_phenopacket", {'ppkt': ppkt});
   }
 
-  async getPresenceMatrix(): Promise<PresenceMatrixPayload> {
-    return await invoke("get_presence_matrix");
+  async getPresenceMatrix(annotationMap: Record<string, GeneDiseaseAssociation[]>): Promise<PresenceMatrixPayload> {
+    return await invoke("get_presence_matrix", {annotations: annotationMap});
   }
 
   async getAutocompleteHpo(value: string): Promise<OntologyMatch[]> {

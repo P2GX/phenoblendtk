@@ -13,6 +13,7 @@ use ga4ghphetools::dto::hpo_term_dto::HpoTermDuplet;
 use ga4ghphetools::tauri::models::HierarchyMapItem;
 use ontolius::ontology::OntologyTerms;
 use tauri::{AppHandle, Emitter, WindowEvent};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use ga4ghphetools::tauri::{pick_file_and_process, load_ontology, OntologyLoadEvent};
 use phenopackets::schema::v2::Phenopacket;
@@ -181,13 +182,14 @@ async fn load_gene_disease_associations(
 }
 
 #[tauri::command]
-async fn get_presence_matrix(
+fn get_presence_matrix(
     app: AppHandle,
     state: tauri::State<'_, Arc<AppState>>,
+    annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
 ) -> Result<PresenceMatrixPayload, String> {
     let state_handle = state.inner().clone();
-    let mut singleton = state_handle.phenoblendtk.lock().unwrap();
-    singleton.calculate_presence_matrix()
+    let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
+    singleton.calculate_presence_matrix(annotations)
 }
 
 
