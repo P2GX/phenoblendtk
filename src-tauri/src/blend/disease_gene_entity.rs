@@ -2,7 +2,7 @@ use std::{collections::{HashMap, HashSet},  sync::Arc};
 
 use ontolius::{TermId, ontology::{HierarchyQueries, csr::FullCsrOntology}};
 use ontolius::ontology::HierarchyWalks;
-use crate::{blend::dto::{PresenceMatrixItem, PresenceMatrixPayload}, hpoa::disease_model::GeneDiseaseAssociation, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
+use crate::{blend::dto::{PresenceMatrixItem, PresenceMatrixPayload, UpsetPlotPayload}, hpoa::disease_model::GeneDiseaseAssociation, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
 
 
 /// This is the structure we use for the phenoblend analysis. We have one such entity for each gene, and the entities can have one or more diseases associated with the gene
@@ -13,7 +13,7 @@ pub struct GeneDiseaseEntity {
     pub ncbi_gene_id: String,
     pub gene_symbol: String,
     pub disease_list: Vec<SimpleOntologyTerm>,
-    disease_hpo_ids: HashSet<TermId> 
+    pub(crate) disease_hpo_ids: HashSet<TermId> 
 }
 
 impl GeneDiseaseEntity {
@@ -89,6 +89,21 @@ impl GeneDiseaseEntity {
         }
         let rows: Vec<PresenceMatrixItem> = term_to_item_d.into_values().collect();
         PresenceMatrixPayload { entities: gene_entities, columns: rows }
+    }
+
+    pub fn get_upset_plot_payload(
+        proband: Proband, 
+        gda_map: &HashMap<String, Vec<GeneDiseaseAssociation>>,
+        disease_counts: &HashMap<TermId, usize>,
+        hpo: Arc<FullCsrOntology>
+    ) -> Result<UpsetPlotPayload, String> {
+
+        let mut gd_entry_list: Vec<GeneDiseaseEntity> = Vec::new();
+        for (symbol, gda_list) in gda_map.into_iter() {
+            let gd_entity =   GeneDiseaseEntity::new(gda_list)?;
+            gd_entry_list.push(gd_entity);
+        }
+        Ok(crate::blend::upset_plot::build_upset_payload(&gd_entry_list, &proband, hpo.clone()))
     }
 
 

@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { invoke } from "@tauri-apps/api/core";
-import { PresenceMatrixPayload } from '../models/viz_dto';
+
 import { FenominalSentence, HierarchyMapItem, OntologyMatch, HpoTermMinimal } from 'ng-hpo-uikit';
 import { InitializationStatusDto } from '../models/status_dto'; 
 import { GeneDiseaseAssociation } from '../models/interfaces';
+import { PresenceMatrixPayload, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/models/phenoprofile_dto';
 
 @Injectable({
   providedIn: 'root'
@@ -29,6 +30,10 @@ export class ConfigService {
 
   async getPresenceMatrix(annotationMap: Record<string, GeneDiseaseAssociation[]>): Promise<PresenceMatrixPayload> {
     return await invoke("get_presence_matrix", {annotations: annotationMap});
+  }
+
+  async getUpsetPlotPayload(annotationMap: Record<string, GeneDiseaseAssociation[]>): Promise<UpsetPlotPayload> {
+    return await invoke<UpsetPlotPayload>("get_upset_plot_payload", {annotations: annotationMap});
   }
 
   async getAutocompleteHpo(value: string): Promise<OntologyMatch[]> {

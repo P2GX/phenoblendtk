@@ -50,3 +50,26 @@ impl PresenceMatrixPayload {
         self.columns.len()
     }
 }
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpsetPlotPayload {
+    /// The unique gene symbols being evaluated (e.g., ["MBNL1", "DMPK"])
+    pub genes: Vec<String>,
+    
+    /// List of combinations, where each combination is a subset of gene symbols
+    pub combinations: Vec<Vec<String>>,
+    
+    /// Total annotated HPO term intersection sizes per combination (Top-Right background bars)
+    pub combination_annotated: Vec<u32>,
+    
+    /// Subsets of those terms overlapping with patient phenotypes (Top-Right foreground bars)
+    pub combination_observed: Vec<u32>,
+    
+    /// Total annotated HPO term sizes per individual gene (Bottom-Left background bars)
+    pub gene_annotated: Vec<u32>,
+    
+    /// Total terms per individual gene overlapping with patient phenotypes (Bottom-Left foreground bars)
+    pub gene_observed: Vec<u32>,
+}

@@ -18,6 +18,7 @@ use std::sync::{Arc, Mutex};
 use ga4ghphetools::tauri::{pick_file_and_process, load_ontology, OntologyLoadEvent};
 use phenopackets::schema::v2::Phenopacket;
 
+use crate::blend::dto::UpsetPlotPayload;
 use crate::{blend::dto::PresenceMatrixPayload, phenoblend::PhenoblendSingleton};
 use crate::model::status::InitializationStatusDto;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
@@ -46,6 +47,7 @@ pub fn run() {
             get_hpo_modifiers,
             get_hpo_parent_and_children_terms,
             get_presence_matrix,
+            get_upset_plot_payload,
             ingest_phenopacket,
             load_hpo,
             load_hpoas,
@@ -183,13 +185,22 @@ async fn load_gene_disease_associations(
 
 #[tauri::command]
 fn get_presence_matrix(
-    app: AppHandle,
     state: tauri::State<'_, Arc<AppState>>,
     annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
 ) -> Result<PresenceMatrixPayload, String> {
     let state_handle = state.inner().clone();
     let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
     singleton.calculate_presence_matrix(annotations)
+}
+
+#[tauri::command]
+fn get_upset_plot_payload(
+    state: tauri::State<'_, Arc<AppState>>,
+    annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
+) -> Result<UpsetPlotPayload, String> {
+     let state_handle = state.inner().clone();
+    let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
+    singleton.get_upset_plot_payload(annotations)
 }
 
 

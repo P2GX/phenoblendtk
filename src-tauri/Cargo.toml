@@ -42,6 +42,7 @@ oboannotation = "0.2.0"
 thiserror = "2.0.18"
 csv = "1.4.0"
 phenopackets = "0.2.2-post2"
+itertools = "0.15.0"
 
 
 

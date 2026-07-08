@@ -4,8 +4,6 @@ use std::sync::Arc;
 
 use ontolius::ontology::HierarchyQueries;
 use ontolius::ontology::HierarchyWalks;
-use ontolius::ontology::OntologyTerms;
-use ontolius::term::MinimalTerm;
 use ontolius::{TermId, ontology::csr::FullCsrOntology};
 
 use crate::blend::disease_gene_entity::GeneDiseaseEntity;
@@ -15,7 +13,7 @@ use crate::hpoa::disease_model::GeneDiseaseAssociation;
 use crate::hpoa::disease_model::SimpleDiseaseModel;
 use crate::model::proband::Proband;
 
-
+/* 
 struct Entity {
     label: String,
     explicit_annotation_ids: HashSet<TermId>,
@@ -124,7 +122,7 @@ fn calculate_for_genes(proband: Proband, hpo: Arc<FullCsrOntology>,
         Ok(vec![])
     }
 
-
+*/
 
 pub fn calculate_presence_matrix(
     hpo: Arc<FullCsrOntology>,
@@ -132,7 +130,7 @@ pub fn calculate_presence_matrix(
     disease_counts: &HashMap<TermId, usize>,
     proband: Proband
 ) -> Result<PresenceMatrixPayload, String> {
-    let observed_hpos = proband.observed_hpos.clone();
+
     let mut gd_entry_list: Vec<GeneDiseaseEntity> = Vec::new();
     for (symbol, gda_list) in annotation_map.into_iter() {
         let gd_entity =   GeneDiseaseEntity::new(gda_list)?;
@@ -140,7 +138,6 @@ pub fn calculate_presence_matrix(
     }
     // Now we have one gene disease entry for each gene. This entry contains
     // HPOs for all of the gene-associated diseases that the user chose in the GUI
-    println!("gd entities {:?}", gd_entry_list);
     let payload: PresenceMatrixPayload = GeneDiseaseEntity::get_presence_matrix_payload(
         proband,
         &gd_entry_list,

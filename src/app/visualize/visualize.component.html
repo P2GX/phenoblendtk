@@ -9,7 +9,7 @@
           <label for="vis-type">Visualization View: </label>
           <select id="vis-type" class="select-dropdown" [value]="activeView()" (change)="onViewChange($event)">
             <option value="matrix">Presence Matrix</option>
-            <option value="network">Phenotypic Network</option>
+            <option value="upset">Phenotypic Upset plot</option>
             <option value="bar">Distribution Bar Chart</option>
           </select>
         </div>
@@ -36,10 +36,8 @@
           @case ('matrix') {
             <app-presence-matrix #matrixComponent [data]="data"></app-presence-matrix>
           }
-          @case ('network') {
-            <div class="placeholder-view">
-              <p>🌐 [D3 Network Graph Component Goes Here]</p>
-            </div>
+          @case ('upset') {
+            <app-upset-plot #upsetComponent [data]="upsetData()!" />
           }
           @case ('bar') {
             <div class="placeholder-view">

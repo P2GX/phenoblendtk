@@ -8,6 +8,7 @@ use ontolius::{TermId,  ontology::csr::FullCsrOntology};
 use phenopackets::schema::v2::Phenopacket;
 
 
+use crate::blend::dto::UpsetPlotPayload;
 use crate::{blend::dto::PresenceMatrixPayload, hpoa::disease_model::SimpleDiseaseModel, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
 use crate::util::settings::PhenoblendSettings;
@@ -110,9 +111,28 @@ impl PhenoblendSingleton {
             &annotations, 
             &self.disease_count_d, 
             proband)?;
-        println!("calculate_presence_matrix pm={:?}", pm);
         Ok(crate::blend::presence_matrix::sort_presence_payload(pm))
     }
+
+    pub fn get_upset_plot_payload(
+        &self,
+        annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
+    )  -> Result<UpsetPlotPayload, String> {
+         let hpo = self.hpo.as_ref()
+            .ok_or_else(|| "Missing required resource: HPO Ontology".to_string())?;
+        
+        let proband = self.individual.clone();
+        let upset = crate::blend::disease_gene_entity::GeneDiseaseEntity::get_upset_plot_payload(
+            proband, 
+            &annotations, 
+            &self.disease_count_d, 
+            hpo.clone())?;
+
+        Ok(upset)
+    }
+
+
+
 
         pub fn calculate_disease_counts(&mut self) -> Result<(), String>{
             let mut disease_counts: HashMap<TermId, usize> = HashMap::new();

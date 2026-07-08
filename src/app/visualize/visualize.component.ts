@@ -5,25 +5,29 @@ import { AnnotationService } from '../services/annotation-service';
 import { GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
 import { PresenceMatrixComponent, PresenceMatrixPayload } from 'projects/ngx-phenoprofile/src/lib/presence-matrix/presence-matrix.component';
+import { UpsetPlotComponent, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/upset/upset-plot.component';
+
 
 // 1. Define a literal type for your 3 view modes
-type VisualizationType = 'matrix' | 'network' | 'bar';
+type VisualizationType = 'matrix' | 'upset' | 'bar';
 
 @Component({
   selector: 'app-presence-visualizer',
   standalone: true,
-  imports: [PresenceMatrixComponent], 
+  imports: [PresenceMatrixComponent, UpsetPlotComponent], 
   templateUrl: './visualize.component.html',
    styleUrls: ['./visualize.component.scss']
 })
-export class PresenceVisualizerComponent {
+export class PhenotypeProfileVisualizerComponent {
   @ViewChild('matrixComponent') private childMatrix!: PresenceMatrixComponent;
+  @ViewChild('upsetComponent') private childUpset!: UpsetPlotComponent;
 
   private configService = inject(ConfigService);
   private annotationService = inject(AnnotationService);
   private notificationService = inject(NotificationService);
 
   readonly matrixData = signal<PresenceMatrixPayload | null>(null);
+  readonly upsetData = signal<UpsetPlotPayload | null>(null);
   readonly isLoading = signal<boolean>(false);
   readonly activeView = signal<VisualizationType>('matrix');
 
@@ -31,7 +35,7 @@ export class PresenceVisualizerComponent {
   readonly currentTitle = computed(() => {
     switch (this.activeView()) {
       case 'matrix': return 'Phenotype Presence Matrix';
-      case 'network': return 'Phenotypic Network Graph';
+      case 'upset': return 'Phenotype Upset Plot';
       case 'bar': return 'Phenotypic Distribution Bar Chart';
     }
   });
@@ -52,9 +56,10 @@ export class PresenceVisualizerComponent {
         return;
       }
       const recordData = Object.fromEntries(this.annotationService.selectedAssociations());
-      console.log("GOT RECORD DARA", recordData);
       const result = await this.configService.getPresenceMatrix(recordData);
-      console.log("PresenceMatrixData", result);
+      const upsetResult = await this.configService.getUpsetPlotPayload(recordData);
+      this.upsetData.set(upsetResult);
+      console.log("upset", upsetResult);
       this.matrixData.set(result);
     } catch (err) {
       console.error('Failed fetching matrix values:', err);
@@ -65,9 +70,16 @@ export class PresenceVisualizerComponent {
 
   exportMatrixToSvg(): void {
     // Kept safe by disabling the button unless activeView() === 'matrix'
-    if (this.activeView() !== 'matrix' || !this.childMatrix) return;
+    const view = this.activeView();
+    if (view !== 'matrix' && view !== 'upset') return;
 
     try {
+      let targetElement: HTMLElement | null = null;
+      if (view === 'matrix' && this.childMatrix) {
+        targetElement = this.childMatrix['chartContainer'].nativeElement;
+      } else if (view === 'upset' && this.childUpset) {
+        targetElement = this.childUpset['chartContainer'].nativeElement;
+      }
       const svgElement = d3.select(this.childMatrix['chartContainer'].nativeElement).select('svg').node() as SVGElement;
       if (!svgElement) {
         alert("Matrix visualization element not found.");

@@ -9,3 +9,12 @@ export interface PresenceMatrixPayload {
   entities: string[]; // Already sorted by your column ranking rules
   columns: PresenceMatrixRow[]; // Already sorted by your tier blocks
 }
+
+export interface UpsetPlotPayload {
+  genes: string[];
+  combinations: string[][];
+  combinationAnnotated: number[];
+  combinationObserved: number[];
+  geneAnnotated: number[];
+  geneObserved: number[];
+}
