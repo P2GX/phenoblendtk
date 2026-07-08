@@ -8,9 +8,9 @@
         <div class="view-selector">
           <label for="vis-type">Visualization View: </label>
           <select id="vis-type" class="select-dropdown" [value]="activeView()" (change)="onViewChange($event)">
-            <option value="matrix">Presence Matrix</option>
+            <option value="overlap">Phenotype Overlap Plot</option>
             <option value="upset">Phenotypic Upset plot</option>
-            <option value="bar">Distribution Bar Chart</option>
+            <option value="spread">Spread Plot</option>
           </select>
         </div>
         
@@ -18,7 +18,7 @@
           <button class="btn btn-secondary" (click)="reloadMatrixData()" [disabled]="isLoading()">
             🔄 Refresh Data
           </button>
-          <button class="btn btn-primary" (click)="exportMatrixToSvg()" [disabled]="isLoading() || !matrixData() || activeView() !== 'matrix'">
+          <button class="btn btn-primary" (click)="exportMatrixToSvg()" [disabled]="isLoading() || !matrixData() || activeView() !== 'overlap'">
             📤 Export SVG Vector
           </button>
         </div>
@@ -33,16 +33,14 @@
       } @else if (matrixData(); as data) {
         
         @switch (activeView()) {
-          @case ('matrix') {
-            <app-presence-matrix #matrixComponent [data]="data"></app-presence-matrix>
+          @case ('overlap') {
+            <app-presence-matrix #overlapComponent [data]="data"></app-presence-matrix>
           }
           @case ('upset') {
             <app-upset-plot #upsetComponent [data]="upsetData()!" />
           }
-          @case ('bar') {
-            <div class="placeholder-view">
-              <p>📊 [D3 Distribution Bar Chart Component Goes Here]</p>
-            </div>
+          @case ('spread') {
+            <app-spread-plot #spreadComponent [data]="spreadData()!"/>
           }
         }
 

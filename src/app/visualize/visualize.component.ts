@@ -6,21 +6,24 @@ import { GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
 import { OverlapPlotComponent, PresenceMatrixPayload } from 'projects/ngx-phenoprofile/src/lib/overlap-plot/overlap-plot.component';
 import { UpsetPlotComponent, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/upset/upset-plot.component';
+import { SpreadPlotComponent } from 'projects/ngx-phenoprofile/src/lib/spread-plot/spread-plot.component';
+import { SpreadPlotPayload } from 'projects/ngx-phenoprofile/src/lib/models/phenoprofile_dto';
 
 
 // 1. Define a literal type for your 3 view modes
-type VisualizationType = 'matrix' | 'upset' | 'bar';
+type VisualizationType = 'overlap' | 'upset' | 'spread';
 
 @Component({
   selector: 'app-presence-visualizer',
   standalone: true,
-  imports: [OverlapPlotComponent, UpsetPlotComponent], 
+  imports: [OverlapPlotComponent, UpsetPlotComponent, SpreadPlotComponent], 
   templateUrl: './visualize.component.html',
    styleUrls: ['./visualize.component.scss']
 })
 export class PhenotypeProfileVisualizerComponent {
-  @ViewChild('matrixComponent') private childMatrix!: OverlapPlotComponent;
+  @ViewChild('overlapComponent') private childMatrix!: OverlapPlotComponent;
   @ViewChild('upsetComponent') private childUpset!: UpsetPlotComponent;
+  @ViewChild('spreadComponent') private childSpread!: SpreadPlotComponent;
 
   private configService = inject(ConfigService);
   private annotationService = inject(AnnotationService);
@@ -28,15 +31,16 @@ export class PhenotypeProfileVisualizerComponent {
 
   readonly matrixData = signal<PresenceMatrixPayload | null>(null);
   readonly upsetData = signal<UpsetPlotPayload | null>(null);
+  readonly spreadData = signal<SpreadPlotPayload | null>(null);
   readonly isLoading = signal<boolean>(false);
-  readonly activeView = signal<VisualizationType>('matrix');
+  readonly activeView = signal<VisualizationType>('overlap');
 
   // Computed title depending on which view is selected
   readonly currentTitle = computed(() => {
     switch (this.activeView()) {
-      case 'matrix': return 'Phenotype Presence Matrix';
-      case 'upset': return 'Phenotype Upset Plot';
-      case 'bar': return 'Phenotypic Distribution Bar Chart';
+      case 'overlap': return 'Phenotypic Overlap Plot';
+      case 'upset': return 'Phenotypic Upset Plot';
+      case 'spread': return 'Phenotypic Spread Plot';
     }
   });
 
@@ -56,11 +60,12 @@ export class PhenotypeProfileVisualizerComponent {
         return;
       }
       const recordData = Object.fromEntries(this.annotationService.selectedAssociations());
-      const result = await this.configService.getPresenceMatrix(recordData);
+      const overlapResult = await this.configService.getOverlapPlotData(recordData);
       const upsetResult = await this.configService.getUpsetPlotPayload(recordData);
+      const spreadResult = await this.configService.getSpreadPlotPayload(recordData);
       this.upsetData.set(upsetResult);
-      console.log("upset", upsetResult);
-      this.matrixData.set(result);
+      this.matrixData.set(overlapResult);
+      this.spreadData.set(spreadResult);
     } catch (err) {
       console.error('Failed fetching matrix values:', err);
     } finally {
@@ -71,14 +76,16 @@ export class PhenotypeProfileVisualizerComponent {
   exportMatrixToSvg(): void {
     // Kept safe by disabling the button unless activeView() === 'matrix'
     const view = this.activeView();
-    if (view !== 'matrix' && view !== 'upset') return;
+    if (view !== 'overlap' && view !== 'upset' && view !== 'spread') return;
 
     try {
       let targetElement: HTMLElement | null = null;
-      if (view === 'matrix' && this.childMatrix) {
+      if (view === 'overlap' && this.childMatrix) {
         targetElement = this.childMatrix['chartContainer'].nativeElement;
       } else if (view === 'upset' && this.childUpset) {
         targetElement = this.childUpset['chartContainer'].nativeElement;
+      } else if (view === 'spread' && this.childSpread) {
+         targetElement = this.childSpread['chartContainer'].nativeElement;
       }
       const svgElement = d3.select(this.childMatrix['chartContainer'].nativeElement).select('svg').node() as SVGElement;
       if (!svgElement) {

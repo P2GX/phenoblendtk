@@ -8,7 +8,7 @@ use ontolius::{TermId,  ontology::csr::FullCsrOntology};
 use phenopackets::schema::v2::Phenopacket;
 
 
-use crate::blend::dto::UpsetPlotPayload;
+use crate::blend::dto::{SpreadPlotPayload, UpsetPlotPayload};
 use crate::{blend::dto::PresenceMatrixPayload, hpoa::disease_model::SimpleDiseaseModel, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
 use crate::util::settings::PhenoblendSettings;
@@ -125,11 +125,28 @@ impl PhenoblendSingleton {
         let upset = crate::blend::disease_gene_entity::GeneDiseaseEntity::get_upset_plot_payload(
             proband, 
             &annotations, 
-            &self.disease_count_d, 
             hpo.clone())?;
 
         Ok(upset)
     }
+
+
+    pub fn get_spread_plot_payload(
+        &self,
+        annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
+    ) -> Result<SpreadPlotPayload, String> {
+        let hpo = self.hpo.as_ref()
+            .ok_or_else(|| "Missing required resource: HPO Ontology".to_string())?;
+        
+        let proband = self.individual.clone();
+        let spread = crate::blend::disease_gene_entity::GeneDiseaseEntity::get_spread_plot_payload(
+            proband, 
+            &annotations, 
+            hpo.clone())?;
+            Ok(spread)
+  }
+
+
 
 
 

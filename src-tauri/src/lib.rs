@@ -19,6 +19,7 @@ use ga4ghphetools::tauri::{pick_file_and_process, load_ontology, OntologyLoadEve
 use phenopackets::schema::v2::Phenopacket;
 
 use crate::blend::dto::UpsetPlotPayload;
+use crate::blend::dto::SpreadPlotPayload;
 use crate::{blend::dto::PresenceMatrixPayload, phenoblend::PhenoblendSingleton};
 use crate::model::status::InitializationStatusDto;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
@@ -46,7 +47,8 @@ pub fn run() {
             get_hpo_autocomplete,
             get_hpo_modifiers,
             get_hpo_parent_and_children_terms,
-            get_presence_matrix,
+            get_overlap_plot,
+            get_spread_plot_payload,
             get_upset_plot_payload,
             ingest_phenopacket,
             load_hpo,
@@ -184,7 +186,7 @@ async fn load_gene_disease_associations(
 }
 
 #[tauri::command]
-fn get_presence_matrix(
+fn get_overlap_plot(
     state: tauri::State<'_, Arc<AppState>>,
     annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
 ) -> Result<PresenceMatrixPayload, String> {
@@ -203,6 +205,14 @@ fn get_upset_plot_payload(
     singleton.get_upset_plot_payload(annotations)
 }
 
+#[tauri::command]
+fn get_spread_plot_payload( state: tauri::State<'_, Arc<AppState>>,
+    annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
+) -> Result<SpreadPlotPayload, String> {
+     let state_handle = state.inner().clone();
+    let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
+    singleton.get_spread_plot_payload(annotations)
+  }
 
 
 /// This function supplies the autocompletion candidates for angular for the HPO

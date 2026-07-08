@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { FenominalSentence, HierarchyMapItem, OntologyMatch, HpoTermMinimal } from 'ng-hpo-uikit';
 import { InitializationStatusDto } from '../models/status_dto'; 
 import { GeneDiseaseAssociation } from '../models/interfaces';
-import { PresenceMatrixPayload, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/models/phenoprofile_dto';
+import { PresenceMatrixPayload, SpreadPlotPayload, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/models/phenoprofile_dto';
 
 @Injectable({
   providedIn: 'root'
@@ -28,12 +28,16 @@ export class ConfigService {
     return await invoke("ingest_phenopacket", {'ppkt': ppkt});
   }
 
-  async getPresenceMatrix(annotationMap: Record<string, GeneDiseaseAssociation[]>): Promise<PresenceMatrixPayload> {
-    return await invoke("get_presence_matrix", {annotations: annotationMap});
+  async getOverlapPlotData(annotationMap: Record<string, GeneDiseaseAssociation[]>): Promise<PresenceMatrixPayload> {
+    return await invoke("get_overlap_plot", {annotations: annotationMap});
   }
 
   async getUpsetPlotPayload(annotationMap: Record<string, GeneDiseaseAssociation[]>): Promise<UpsetPlotPayload> {
     return await invoke<UpsetPlotPayload>("get_upset_plot_payload", {annotations: annotationMap});
+  }
+
+  async getSpreadPlotPayload(annotationMap: Record<string, GeneDiseaseAssociation[]>): Promise<SpreadPlotPayload> {
+    return await invoke<SpreadPlotPayload>("get_spread_plot_payload", {annotations: annotationMap});
   }
 
   async getAutocompleteHpo(value: string): Promise<OntologyMatch[]> {

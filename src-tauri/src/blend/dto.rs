@@ -73,3 +73,27 @@ pub struct UpsetPlotPayload {
     /// Total terms per individual gene overlapping with patient phenotypes (Bottom-Left foreground bars)
     pub gene_observed: Vec<u32>,
 }
+
+
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpreadPlotCategory {
+    pub id: String,
+    pub name: String,
+    /// Optional field mapping to `alias?: string`
+    pub alias: Option<String>,
+    /// Patient/Phenopacket fraction (`ppktValue`)
+    pub ppkt_value: f64,
+    /// Array of values for each gene combo/series (`geneValues`)
+    pub gene_values: Vec<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpreadPlotPayload {
+    /// e.g., ["Ppkt", "MBNL1", "DMPK", "MBNL1+DMPK"]
+    pub series_labels: Vec<String>,
+    pub categories: Vec<SpreadPlotCategory>,
+}
