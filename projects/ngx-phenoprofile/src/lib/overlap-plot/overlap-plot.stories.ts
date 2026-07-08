@@ -1,10 +1,10 @@
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 import { CommonModule, DecimalPipe } from '@angular/common';
-import { PresenceMatrixComponent } from './presence-matrix.component';
+import { OverlapPlotComponent } from './overlap-plot.component';
 
-const meta: Meta<PresenceMatrixComponent> = {
+const meta: Meta<OverlapPlotComponent> = {
   title: 'PhenoViz/PresenceMatrix',
-  component: PresenceMatrixComponent,
+  component: OverlapPlotComponent,
   decorators: [
     moduleMetadata({
       imports: [CommonModule, DecimalPipe],
@@ -14,7 +14,7 @@ const meta: Meta<PresenceMatrixComponent> = {
 };
 
 export default meta;
-type Story = StoryObj<PresenceMatrixComponent>;
+type Story = StoryObj<OverlapPlotComponent>;
 
 // Sample mock payload mimicking your D3 payload DTO
 const mockPayload = {

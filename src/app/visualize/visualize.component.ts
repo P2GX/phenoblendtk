@@ -4,7 +4,7 @@ import { ConfigService } from '../services/config-service';
 import { AnnotationService } from '../services/annotation-service';
 import { GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
-import { PresenceMatrixComponent, PresenceMatrixPayload } from 'projects/ngx-phenoprofile/src/lib/presence-matrix/presence-matrix.component';
+import { OverlapPlotComponent, PresenceMatrixPayload } from 'projects/ngx-phenoprofile/src/lib/overlap-plot/overlap-plot.component';
 import { UpsetPlotComponent, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/upset/upset-plot.component';
 
 
@@ -14,12 +14,12 @@ type VisualizationType = 'matrix' | 'upset' | 'bar';
 @Component({
   selector: 'app-presence-visualizer',
   standalone: true,
-  imports: [PresenceMatrixComponent, UpsetPlotComponent], 
+  imports: [OverlapPlotComponent, UpsetPlotComponent], 
   templateUrl: './visualize.component.html',
    styleUrls: ['./visualize.component.scss']
 })
 export class PhenotypeProfileVisualizerComponent {
-  @ViewChild('matrixComponent') private childMatrix!: PresenceMatrixComponent;
+  @ViewChild('matrixComponent') private childMatrix!: OverlapPlotComponent;
   @ViewChild('upsetComponent') private childUpset!: UpsetPlotComponent;
 
   private configService = inject(ConfigService);
@@ -112,4 +112,4 @@ export class PhenotypeProfileVisualizerComponent {
   }
 }
 
-export { PresenceMatrixComponent };
+export { OverlapPlotComponent as PresenceMatrixComponent };

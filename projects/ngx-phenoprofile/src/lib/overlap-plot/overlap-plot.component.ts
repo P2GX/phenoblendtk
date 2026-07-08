@@ -41,7 +41,7 @@ import { PresenceMatrixPayload } from '../models/phenoprofile_dto';
   `],
   imports: [DecimalPipe]
 })
-export class PresenceMatrixComponent implements OnChanges {
+export class OverlapPlotComponent implements OnChanges {
   @ViewChild('matrixSvgContainer', { static: true }) private chartContainer!: ElementRef;
   @Input({ required: true }) data!: PresenceMatrixPayload;
 
