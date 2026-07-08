@@ -4,3 +4,4 @@ src-tauri/target/
 .nx/
 src-tauri/gen/
 .vscode/
+.angular

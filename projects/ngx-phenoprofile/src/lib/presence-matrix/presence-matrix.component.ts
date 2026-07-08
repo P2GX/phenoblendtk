@@ -2,7 +2,8 @@
 import { Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild, signal } from '@angular/core';
 import { DecimalPipe} from '@angular/common'
 import * as d3 from 'd3';
-import { PresenceMatrixPayload } from '../../models/viz_dto';
+import { PresenceMatrixPayload } from '../models/phenoprofile_dto';
+
 
 
 
@@ -68,10 +69,13 @@ export class PresenceMatrixComponent implements OnChanges {
 
     // Configurable scaling step bounds (similar to your 0.5 inches space calculations)
     const cellSize = 30;
-    const margin = { top: 120, right: 100, bottom: 40, left: 180 };
-
-    const width = (cols.length * cellSize) + margin.left + margin.right;
+    //const margin = { top: 120, right: 100, bottom: 40, left: 180 };
+    const margin = { top: 120, right: 180, bottom: 40, left: 180 };
+    const matrixWidth = cols.length * cellSize; // Width of just the matrix grid
+    const width = matrixWidth + margin.left + margin.right;
     const height = (genes.length * cellSize) + margin.top + margin.bottom;
+   // const width = (cols.length * cellSize) + margin.left + margin.right;
+    //const height = (genes.length * cellSize) + margin.top + margin.bottom;
 
     // 1. Initialize the root SVG canvas viewport
     const svg = d3.select(container)
@@ -98,8 +102,10 @@ export class PresenceMatrixComponent implements OnChanges {
       if (score >= 1.0) return this.MATCH_COLOR;
       if (score <= 0.0) return this.MISMATCH_COLOR;
       
-      // Interpolate partial matches down through your yellow simcolor alphas
-      return d3.interpolateLab(d3.lab(this.SIM_COLOR).copy({ l: 90 }), this.SIM_COLOR)(score);
+      // Discrete steps for partial patches (Adjust thresholds as needed!)
+      if (score < 0.33) return '#fff2ae'; // Very pale yellow
+      if (score < 0.66) return '#fede58'; // Mid yellow
+      return this.SIM_COLOR;              // Full yellow (#ffd92f)
     };
 
     // 4. Render X Axis Headers (HPO Terms turned -45 deg)
@@ -117,7 +123,7 @@ export class PresenceMatrixComponent implements OnChanges {
       .style('text-anchor', 'start')
       .style('font-size', '11px')
       .style('font-weight', '500')
-      .text(d => d.hpoName.length > 22 ? d.hpoName.substring(0, 20) + '...' : d.hpoName);
+      .text(d => d.hpoName.length > 42 ? d.hpoName.substring(0, 40) + '...' : d.hpoName);
 
     // 5. Render Y Axis Headers (Gene Symbols)
     mainGroup.append('g')
@@ -188,6 +194,71 @@ export class PresenceMatrixComponent implements OnChanges {
           .style('pointer-events', 'none'); // Let pointer events fall directly through to the tracking rect
       });
     });
+    // ==========================================
+// 7. Render Compact Colorbar Legend on the Right
+// ==========================================
+
+const legendData = [
+  { label: 'match',   color: this.MATCH_COLOR,   showLabel: true },
+  { label: '',        color: '#ffd92f',          showLabel: false }, 
+  { label: 'partial', color: '#fede58',          showLabel: true }, 
+  { label: '',        color: '#fff2ae',          showLabel: false }, 
+  { label: 'none',    color: this.MISMATCH_COLOR, showLabel: true }
+];
+
+const legendX = matrixWidth + 40; 
+const totalLegendHeight = cellSize * 2; // Hard cap the height to exactly 2 rows (~60px)
+const legendItemHeight = totalLegendHeight / legendData.length; // ~12px per block
+const legendWidth = 15; // Slightly slimmer to match the compact height
+
+// Create a container group for the legend
+const legendGroup = mainGroup.append('g')
+  .attr('transform', `translate(${legendX}, 0)`);
+
+// Draw the color rectangles
+legendGroup.selectAll('.legend-rect')
+  .data(legendData)
+  .enter()
+  .append('rect')
+  .attr('x', 0)
+  .attr('y', (_, i) => i * legendItemHeight)
+  .attr('width', legendWidth)
+  .attr('height', legendItemHeight)
+  .style('fill', d => d.color)
+  .style('stroke', '#333333')
+  .style('stroke-width', '1px');
+
+// Add tick marks on the right side of every block boundary
+legendGroup.selectAll('.legend-tick')
+  .data(d3.range(1, legendData.length)) // 1 to 4 ensures top and bottom outer borders aren't doubled
+  .enter()
+  .append('line')
+  .attr('x1', 0)
+  .attr('x2', legendWidth)
+  .attr('y1', d => d * legendItemHeight)
+  .attr('y2', d => d * legendItemHeight)
+  .style('stroke', '#333333')
+  .style('stroke-width', '1px');
+
+// Add text labels only for match, partial, and miss
+legendGroup.selectAll('.legend-label')
+  .data(legendData)
+  .enter()
+  .filter(d => d.showLabel) // Only render text for the main milestones
+  .append('text')
+  .attr('x', legendWidth + 10)
+  .attr('y', (_, i, nodes) => {
+    // Elegant centering: 'match' aligns with top block, 'miss' with bottom block, 'partial' dead center
+    const label = d3.select(nodes[i]).datum() as any;
+    if (label.label === 'match') return (legendItemHeight / 2);
+    if (label.label === 'none') return totalLegendHeight - (legendItemHeight / 2);
+    return totalLegendHeight / 2; // 'partial' centered right in the middle of the bar
+  })
+  .attr('dy', '0.35em')
+  .style('font-size', '12px')
+  .style('font-family', 'sans-serif')
+  .style('fill', '#000000')
+  .text(d => d.label);
   }
 }
 

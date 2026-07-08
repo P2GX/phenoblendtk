@@ -1,14 +1,10 @@
 import { Component, ViewChild, signal, computed, inject } from '@angular/core';
-// Assuming you create or have these placeholders ready for the other two:
-// import { NetworkGraphComponent } from './network-graph.component';
-// import { DistributionBarComponent } from './distribution-bar.component';
 import * as d3 from 'd3';
-import { PresenceMatrixComponent } from './presence-matrix/presence-matrix.component';
-import { PresenceMatrixPayload } from '../models/viz_dto';
 import { ConfigService } from '../services/config-service';
 import { AnnotationService } from '../services/annotation-service';
 import { GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
+import { PresenceMatrixComponent, PresenceMatrixPayload } from 'projects/ngx-phenoprofile/src/lib/presence-matrix/presence-matrix.component';
 
 // 1. Define a literal type for your 3 view modes
 type VisualizationType = 'matrix' | 'network' | 'bar';
