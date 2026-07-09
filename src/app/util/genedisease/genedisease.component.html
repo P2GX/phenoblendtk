@@ -45,17 +45,8 @@
                 type="checkbox"
                 [checked]="isDiseaseSelected(entry, assoc.diseaseId)"
                 (change)="toggleDisease(entry.geneSymbol, assoc.diseaseId)">
-              <li class="disease-checklist-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    [checked]="isDiseaseSelected(entry, assoc.diseaseId)"
-                    (change)="toggleDisease(entry.geneSymbol, assoc.diseaseId)">
-                  <span class="disease-label">{{ assoc.diseaseModel?.omimDiseaseName ?? assoc.diseaseId }}</span>
-                  <small class="disease-id">{{ assoc.diseaseId }}</small>
-                  <small class="association-type">{{ assoc.associationType }}</small>
-                </label>
-              </li>
+              <span class="disease-label">{{ assoc.diseaseModel?.omimDiseaseName ?? assoc.diseaseId }}</span>
+              <small class="disease-id">{{ assoc.diseaseId }}</small>
               <small class="association-type">{{ assoc.associationType }}</small>
             </label>
           </li>
@@ -66,10 +57,17 @@
     </div>
   }
   <div class="workspace-footer">
+    <p class="gene-count-hint">
+      @if (genesWithSelections() < 2) {
+        Select at least one disease for {{ 2 - genesWithSelections() }} more gene{{ 2 - genesWithSelections() > 1 ? 's' : '' }} to continue.
+      } @else {
+        {{ genesWithSelections() }} genes ready.
+      }
+    </p>
     <button
-      mat-raised-button
+      class="btn-outline-primary"
       color="primary"
-      [disabled]="!hasAnySelection()"
+      [disabled]="!canProceed()"
       (click)="goToVisualization()">
       Next: Visualize
     </button>

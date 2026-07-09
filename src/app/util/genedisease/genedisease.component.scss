@@ -137,15 +137,30 @@
   font-style: italic;
 }
 
-.workspace-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 14px;
-  border-top: 1px solid #e2e8f0;
-}
-
 .disease-id {
   color: #94a3b8;
   font-family: monospace;
   font-size: 0.72rem;
+}
+
+.workspace-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 0;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.gene-count-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666);
+}
+
+button[mat-raised-button] {
+  &[disabled] {
+    opacity: 0.6; // Material already dims disabled buttons, but this makes the count-hint feel like the reason, not a glitch
+  }
 }

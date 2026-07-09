@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { GeneDiseaseAssociation } from '../../models/interfaces';
 import { AnnotationService } from '../../services/annotation-service';
 import { Router } from '@angular/router';
+import { NotificationService } from 'ng-hpo-uikit';
 
 interface GeneEntry {
   geneSymbol: string;
@@ -36,8 +37,15 @@ interface GeneEntry {
 export class GeneDiseaseComponent {
   private readonly annotationService = inject(AnnotationService);
   private readonly router = inject(Router);
+  private readonly notificationService = inject(NotificationService);
 
   protected control = new FormControl<string>('', { nonNullable: true });
+
+  protected readonly genesWithSelections = computed(() =>
+    this.geneEntries().filter(e => e.selectedDiseaseIds.size > 0).length
+  );
+
+  protected readonly canProceed = computed(() => this.genesWithSelections() >= 2);
 
   private searchResults = toSignal(
     this.control.valueChanges.pipe(
@@ -50,7 +58,7 @@ export class GeneDiseaseComponent {
         }
         return from(this.annotationService.autocompleteGeneSymbol(trimmed)).pipe(
           catchError(err => {
-            console.error('Gene autocomplete failed:', err);
+            this.notificationService.showError(String(err));
             return of<GeneDiseaseAssociation[]>([]);
           })
         );
