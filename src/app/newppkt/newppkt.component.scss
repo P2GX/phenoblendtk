@@ -1,88 +1,34 @@
-.new-case-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+.ingest-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: stretch; // forces both cards to match the tallest one
+}
 
-  .workspace-header {
-    margin-bottom: 2rem;
-    
-    h1 {
-      color: #0f172a;
-      font-size: 1.75rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    p {
-      color: #475569;
-      margin: 0;
-    }
-  }
-
-  .workspace-body {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
 .ingest-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1.5rem;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  background: var(--card-bg, #fff);
 
-    .card-icon {
-      font-size: 1.75rem;
-      margin-bottom: 0.75rem;
-    }
-
-    h2 {
-      color: #0f172a;
-      font-size: 1.1rem;
-      margin: 0 0 0.5rem;
-    }
-
-    p {
-      color: #475569;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin: 0 0 1.25rem;
-      flex-grow: 1;
-    }
-
-    // pins the action element (button or loader component) to the bottom
-    // so both cards' buttons line up even if the description text wraps
-    // to different lengths
-    > .btn-primary,
-    > hpo-phenopacket-loader {
-      margin-top: auto;
-      width: 100%;
-    }
-    .btn-primary {
-    padding: 0.65rem 1.25rem;
-    background-color: #0f172a;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    cursor: pointer;
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    &:hover:not(:disabled) {
-      background-color: #1e293b;
-    }
+  .card-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
   }
 
-  // intentionally no rules here — equal prominence means the text-mining
-  // card gets nothing beyond what .ingest-card already provides
-  .text-mining-card {
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
   }
+
+  p {
+    flex-grow: 1; // pushes the action (button/loader) to the same vertical position in both cards
+    margin: 0 0 1.5rem;
+    color: var(--text-secondary, #666);
+    font-size: 0.9rem;
   }
-  
 }

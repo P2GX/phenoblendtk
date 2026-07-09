@@ -4,10 +4,14 @@ import { ConfigService } from '../services/config-service';
 import { AnnotationService } from '../services/annotation-service';
 import { GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
-import { OverlapPlotComponent, PresenceMatrixPayload } from 'projects/ngx-phenoprofile/src/lib/overlap-plot/overlap-plot.component';
-import { UpsetPlotComponent, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/upset/upset-plot.component';
-import { SpreadPlotComponent } from 'projects/ngx-phenoprofile/src/lib/spread-plot/spread-plot.component';
-import { SpreadPlotPayload } from 'projects/ngx-phenoprofile/src/lib/models/phenoprofile_dto';
+//import { OverlapPlotComponent, PresenceMatrixPayload } from 'projects/ngx-phenoprofile/src/lib/overlap-plot/overlap-plot.component';
+//import { UpsetPlotComponent, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/upset/upset-plot.component';
+//import { SpreadPlotComponent } from 'projects/ngx-phenoprofile/src/lib/spread-plot/spread-plot.component';
+//import { SpreadPlotPayload } from 'projects/ngx-phenoprofile/src/lib/models/phenoprofile_dto';
+//import { UpsetPlotComponent } from '../../../projects/ngx-phenoprofile/src/lib/upset/upset-plot.component';
+//import { SpreadPlotComponent } from '../../../projects/ngx-phenoprofile/src/lib/spread-plot/spread-plot.component';
+//import { OverlapPlotComponent } from '../../../projects/ngx-phenoprofile/src/lib/overlap-plot/overlap-plot.component';
+import { UpsetPlotComponent, SpreadPlotComponent, OverlapPlotComponent, SpreadPlotPayload, PresenceMatrixPayload, UpsetPlotPayload } from 'ngx-phenoprofile';
 
 
 // 1. Define a literal type for your 3 view modes

@@ -1,7 +1,7 @@
 <div class="new-case-container">
   <header class="workspace-header">
-    <h1>Initialize Clinical Case</h1>
-    <p>Select a method to import or extract Human Phenotype Ontology (HPO) terms for the patient.</p>
+    <h1>Initialize Phenotype Data</h1>
+    <p>Select a method to import or extract Human Phenotype Ontology (HPO) terms for an individual.</p>
   </header>
 
   <div class="workspace-body">
@@ -37,11 +37,6 @@
       </div>
     }
 
-    @if (activeCaseId(); as id) {
-      <div class="status-indicator success">
-        <p>✅ <strong>Active Case Target loaded successfully:</strong> <code>{{ id }}</code></p>
-      </div>
-    }
 
     @if (errorDetails(); as err) {
       <div class="status-indicator failure">

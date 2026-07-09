@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { FenominalSentence, HierarchyMapItem, OntologyMatch, HpoTermMinimal } from 'ng-hpo-uikit';
 import { InitializationStatusDto } from '../models/status_dto'; 
 import { GeneDiseaseAssociation } from '../models/interfaces';
-import { PresenceMatrixPayload, SpreadPlotPayload, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/models/phenoprofile_dto';
+import { PresenceMatrixPayload, SpreadPlotPayload, UpsetPlotPayload } from 'ngx-phenoprofile';
 
 @Injectable({
   providedIn: 'root'

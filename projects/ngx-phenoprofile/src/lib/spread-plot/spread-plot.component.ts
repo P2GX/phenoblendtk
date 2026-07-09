@@ -1,19 +1,9 @@
 // spread-plot.component.ts
 import { Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import * as d3 from 'd3';
+import { SpreadPlotPayload } from '../models/phenoprofile_dto';
 
-export interface SpreadPlotCategory {
-  id: string;
-  name: string;
-  alias?: string;
-  ppktValue: number;         // Patient/Phenopacket fraction
-  geneValues: number[];      // Array of values for each gene combo/series
-}
 
-export interface SpreadPlotPayload {
-  seriesLabels: string[];    // e.g., ["Ppkt", "MBNL1", "DMPK", "MBNL1+DMPK"]
-  categories: SpreadPlotCategory[];
-}
 
 @Component({
   selector: 'app-spread-plot',

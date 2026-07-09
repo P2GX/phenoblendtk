@@ -11,7 +11,7 @@
     "lib": ["ES2022", "dom"],
     "skipLibCheck": true,
     "paths": {
-      "ngx-phenoprofile": ["./projects/ngx-phenoprofile/src/index.ts"]
+      "ngx-phenoprofile": ["./projects/ngx-phenoprofile/src/public-api.ts"]
     }
   }
 }

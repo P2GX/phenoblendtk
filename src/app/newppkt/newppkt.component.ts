@@ -10,14 +10,12 @@ import { Router } from '@angular/router';
 
 
 
-export type OntologySearchProvider = (query: string) => Observable<OntologyMatch[]>;
-
-
-export interface FenominalMiningInterface {
-  searchProvider: (query: string) => Observable<OntologyMatch[]>;
-  mineTextProvider: (text: string) => Promise<FenominalSentence[]>; // Add this
-}
-
+/*
+ * This component allows the user to entter HPO data by either choosing a phenopacket or by
+ * entering a clinical text and using named-entity recognition (NER)/text-mining to
+ * get a list of HPO terms. We expect these term to be the clinicial manifestations of
+ * an individual with multiple genetic diagnoses.
+*/
 @Component({
   selector: 'app-new-case',
   standalone: true,
@@ -25,13 +23,13 @@ export interface FenominalMiningInterface {
   templateUrl: './newppkt.component.html',
   styleUrls: ['./newppkt.component.scss']
 })
-export class NewPpktComponent {
+export class NewCaseComponent {
 
   private router = inject(Router);
   readonly isProcessing = signal<boolean>(false);
   readonly statusMessage = signal<string | null>(null);
   readonly errorDetails = signal<string | null>(null);
-  readonly activeCaseId = signal<string | null>(null);
+
 
   private configService = inject(ConfigService);
   private notificationService = inject(NotificationService);
@@ -48,10 +46,10 @@ export class NewPpktComponent {
     this.isProcessing.set(true);
     this.statusMessage.set('Parsing phenopacket payload in Rust engine...');
     this.errorDetails.set(null);
-    console.log("processPhenopacketIngest - payload", payload);
     try { 
       this.configService.ingestPhenopacket(payload);
       this.notificationService.showSuccess('Phenopacket ingested successfully.'); 
+      this.proceedToNextWindow();
     } catch (error) {
       this.notificationService.showError('Ingestion failed.');
     } finally {
@@ -59,28 +57,32 @@ export class NewPpktComponent {
     }
   };
 
-  /**
- * The search provider implementation matching the signature expected by HpoTwostepComponent.
- * Converts the Tauri Promise into an RxJS Observable using 'from'.
- */
-  private readonly hpoSearchProvider = (query: string): Observable<OntologyMatch[]> => {
-    // If the query is less than 3 characters, short-circuit immediately to save a IPC roundtrip
-    if (!query || query.trim().length < 3) {
-      return from(Promise.resolve([]));
-    }
-    
-    return from(this.configService.getAutocompleteHpo(query));
-  };
 
   private readonly availableModifiers = (): Promise<HpoTermMinimal[]> => {
     return this.configService.getHpoModifiers();
   };
 
-   selectedHpoTerm: OntologyMatch | null = null;
+  performHpoAutocomplete = (query: string): Observable<OntologyMatch[]> => {
+    return from(this.configService.performHpoAutocomplete(query)).pipe(
+      catchError(err => {
+        this.notificationService.showError(String(err));
+        return of([]);
+      })
+    );
+  };
+   
+  fetchHpoHierarchy = (termId: string): Promise<HierarchyMapItem> => {
+    const cached = this.hierarchyCache()[termId];
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+    return this.configService.getHpoParentAndChildrenTerms(termId).then(data => {
+      this.hierarchyCache.update(cache => ({ ...cache, [termId]: data }));
+      return data;
+    });
+  };
 
-   async handleSelection(match: OntologyMatch) {
-    this.selectedHpoTerm = match;
-  }
+
 
   protected openCurationWizard(): void {
     const dialogRef = this.dialog.open(HpoTwostepComponent, {
@@ -90,50 +92,33 @@ export class NewPpktComponent {
       disableClose: true,
       data: {
         mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
-        autocompleteProvider: (query: string) =>  this.performHpoAutocomplete(query),
+        autocompleteProvider: this.performHpoAutocomplete,
         hierarchyProvider: this.fetchHpoHierarchy,
         availableModifiers: this.availableModifiers
       }
     });
-
-
-    // Capture the final optimized array of PolishedHpoAnnotation objects on close
-    dialogRef.afterClosed().subscribe((polishedAnnotations) => {
+    dialogRef.afterClosed().subscribe((polishedAnnotations?: PolishedHpoAnnotation[]) => {
       if (polishedAnnotations) {
-        console.log('Received curated HPO annotations:', polishedAnnotations);
-        const observedTerms = polishedAnnotations.filter((annot: { excluded: any; }) => ! annot.excluded);
-        console.log('Observed terms from text mining:', observedTerms);
-        
-        this.proceedToNextWindow(observedTerms);
+        const observedTerms: PolishedHpoAnnotation[] = polishedAnnotations.filter((annot: { excluded: any; }) => ! annot.excluded);
+        const n_observed = observedTerms.length;
+       if (n_observed > 0) {
+        this.proceedToNextWindow();
+       } else {
+          this.notificationService.showError(`Extracted ${polishedAnnotations.length} phenotype annotations but no observed HPOs!`)
+       }
+      } else {
+        this.notificationService.showError("Could not extract phenotype annotations!")
       }
     });
   }
 
-  fetchHpoHierarchy = (termId: string): Promise<HierarchyMapItem> => {
-    const cached = this.hierarchyCache()[termId];
-    if (cached) {
-      return Promise.resolve(cached);
-    }
-    
-    return this.configService.getHpoParentAndChildrenTerms(termId).then(data => {
-      this.hierarchyCache.update(cache => ({ ...cache, [termId]: data }));
-      return data;
-    });
-  };
 
-  protected performHpoAutocomplete(query: string): Observable<OntologyMatch[]> {
-    return from(this.configService.performHpoAutocomplete(query)).pipe(
-      catchError(err => {
-        this.notificationService.showError(String(err));
-        return of([]); // fail gracefully — empty results, not a broken autocomplete
-      })
-    );
-  }
 
-   
 
-  private proceedToNextWindow(observedTerms: any[]): void {
-    this.notificationService.showSuccess("TODO implement proceed to next");
-    this.router.navigate(['/pttemplate']);
+
+
+
+  private proceedToNextWindow(): void {
+    this.router.navigate(['/genedisease']);
   }
 }

@@ -97,6 +97,7 @@ fn ingest_phenopacket(
     // 3. Now convert the sanitized JSON value into the official Phenopacket type
     let phenopacket: Phenopacket = serde_json::from_value(json_value)
         .map_err(|e| format!("Phenopacket Schema validation error: {}", e))?;
+    let identifier = phenopacket.id.clone();
     singleton.ingest_ppkt(phenopacket)?;
     Ok(())
 }
