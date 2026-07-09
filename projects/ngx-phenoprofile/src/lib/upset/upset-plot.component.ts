@@ -15,7 +15,9 @@ import { UpsetPlotPayload } from '../models/phenoprofile_dto';
   `]
 })
 export class UpsetPlotComponent implements OnChanges {
-  @ViewChild('chartContainer', { static: true }) private chartContainer!: ElementRef;
+  //@ViewChild('chartContainer', { static: true }) private chartContainer!: ElementRef;
+    @ViewChild('chartContainer', { static: true }) chartContainerRef!: ElementRef<HTMLElement>;
+
   @Input({ required: true }) data!: UpsetPlotPayload;
 
   // Exact color definitions extracted from your Matplotlib script values
@@ -30,7 +32,7 @@ export class UpsetPlotComponent implements OnChanges {
   }
 
   private renderUpsetPlot(): void {
-    const container = this.chartContainer.nativeElement;
+    const container = this.chartContainerRef.nativeElement;
     container.innerHTML = '';
 
     const { genes, combinations, combinationAnnotated, combinationObserved, geneAnnotated, geneObserved } = this.data;

@@ -67,5 +67,9 @@ export class ConfigService {
   async  autocompleteGeneSymbol(query: string): Promise<GeneDiseaseAssociation[]> {
     return invoke<GeneDiseaseAssociation[]>('autocomplete_gene_symbol', { query });
   }
+
+  async getObservedHpoCount(): Promise<number> {
+    return invoke<number>('get_observed_hpo_count');
+  }
   
 }

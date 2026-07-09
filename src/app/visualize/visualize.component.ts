@@ -1,21 +1,16 @@
-import { Component, ViewChild, signal, computed, inject } from '@angular/core';
+import { Component, ViewChild, signal, computed, inject, OnInit } from '@angular/core';
 import * as d3 from 'd3';
 import { ConfigService } from '../services/config-service';
 import { AnnotationService } from '../services/annotation-service';
 import { GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
-//import { OverlapPlotComponent, PresenceMatrixPayload } from 'projects/ngx-phenoprofile/src/lib/overlap-plot/overlap-plot.component';
-//import { UpsetPlotComponent, UpsetPlotPayload } from 'projects/ngx-phenoprofile/src/lib/upset/upset-plot.component';
-//import { SpreadPlotComponent } from 'projects/ngx-phenoprofile/src/lib/spread-plot/spread-plot.component';
-//import { SpreadPlotPayload } from 'projects/ngx-phenoprofile/src/lib/models/phenoprofile_dto';
-//import { UpsetPlotComponent } from '../../../projects/ngx-phenoprofile/src/lib/upset/upset-plot.component';
-//import { SpreadPlotComponent } from '../../../projects/ngx-phenoprofile/src/lib/spread-plot/spread-plot.component';
-//import { OverlapPlotComponent } from '../../../projects/ngx-phenoprofile/src/lib/overlap-plot/overlap-plot.component';
 import { UpsetPlotComponent, SpreadPlotComponent, OverlapPlotComponent, SpreadPlotPayload, PresenceMatrixPayload, UpsetPlotPayload } from 'ngx-phenoprofile';
-
+import jsPDF from 'jspdf';
+import { svg2pdf } from 'svg2pdf.js';
 
 // 1. Define a literal type for your 3 view modes
 type VisualizationType = 'overlap' | 'upset' | 'spread';
+type ExportFormat = 'svg' |  'pdf';
 
 @Component({
   selector: 'app-presence-visualizer',
@@ -24,13 +19,13 @@ type VisualizationType = 'overlap' | 'upset' | 'spread';
   templateUrl: './visualize.component.html',
    styleUrls: ['./visualize.component.scss']
 })
-export class PhenotypeProfileVisualizerComponent {
+export class PhenotypeProfileVisualizerComponent implements OnInit {
   @ViewChild('overlapComponent') private childMatrix!: OverlapPlotComponent;
   @ViewChild('upsetComponent') private childUpset!: UpsetPlotComponent;
   @ViewChild('spreadComponent') private childSpread!: SpreadPlotComponent;
 
   private configService = inject(ConfigService);
-  private annotationService = inject(AnnotationService);
+  protected annotationService = inject(AnnotationService);
   private notificationService = inject(NotificationService);
 
   readonly matrixData = signal<PresenceMatrixPayload | null>(null);
@@ -54,12 +49,16 @@ export class PhenotypeProfileVisualizerComponent {
     this.activeView.set(target.value as VisualizationType);
   }
 
+  ngOnInit(): void {
+    this.reloadMatrixData();
+  }
+
   async reloadMatrixData(): Promise<void> {
     this.isLoading.set(true);
     try {
       const selectedAnnotations: GeneDiseaseAssociation[] = this.annotationService.allSelectedAssociations();
       if (selectedAnnotations.length < 2) {
-        const errMsg = `At least two gene/disease pairs required to perform analysis but only {selectedAnnotations.length} available.`;
+        const errMsg = `At least two gene/disease pairs required to perform analysis but only ${selectedAnnotations.length} available.`;
         this.notificationService.showError(errMsg);
         return;
       }
@@ -77,6 +76,7 @@ export class PhenotypeProfileVisualizerComponent {
     }
   }
 
+  /*
   exportMatrixToSvg(): void {
     // Kept safe by disabling the button unless activeView() === 'matrix'
     const view = this.activeView();
@@ -91,7 +91,7 @@ export class PhenotypeProfileVisualizerComponent {
       } else if (view === 'spread' && this.childSpread) {
          targetElement = this.childSpread['chartContainer'].nativeElement;
       }
-      const svgElement = d3.select(this.childMatrix['chartContainer'].nativeElement).select('svg').node() as SVGElement;
+      const svgElement = d3.select(targetElement).select('svg').node() as SVGElement;
       if (!svgElement) {
         alert("Matrix visualization element not found.");
         return;
@@ -120,7 +120,80 @@ export class PhenotypeProfileVisualizerComponent {
     } catch (error) {
       console.error('Vector serialization failure:', error);
     }
+  }*/
+ async exportMatrix(format: ExportFormat): Promise<void> {
+  const view = this.activeView();
+  if (view !== 'overlap' && view !== 'upset' && view !== 'spread') return;
+
+  const targetElement = this.getChartContainerElement(view);
+  if (!targetElement) {
+    this.notificationService.showError('Visualization element not found.');
+    return;
+  }
+
+  const svgElement = d3.select(targetElement).select('svg').node() as SVGElement | null;
+  if (!svgElement) {
+    this.notificationService.showError('No SVG content found for the active view.');
+    return;
+  }
+
+  const svgClone = svgElement.cloneNode(true) as SVGElement;
+  svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svgClone.setAttribute('version', '1.1');
+
+  const { width, height } = svgElement.getBoundingClientRect();
+  const dateStamp = new Date().toISOString().split('T')[0];
+  const filenameBase = `hpo_${view}_plot_${dateStamp}`;
+
+  try {
+    switch (format) {
+      case 'svg': {
+        const serializer = new XMLSerializer();
+        const svgString = '<?xml version="1.0" standalone="no"?>\n' + serializer.serializeToString(svgClone);
+        this.downloadBlob(new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' }), `${filenameBase}.svg`);
+        break;
+      }
+      case 'pdf': {
+        await this.svgToPdf(svgClone, width, height);
+        break;
+      }
+    }
+  } catch (error) {
+    console.error(`${format.toUpperCase()} export failed:`, error);
+    this.notificationService.showError(`Failed to export as ${format.toUpperCase()}.`);
   }
 }
 
-export { OverlapPlotComponent as PresenceMatrixComponent };
+private getChartContainerElement(view: VisualizationType): HTMLElement | null {
+  switch (view) {
+    case 'overlap': return this.childMatrix?.chartContainerRef?.nativeElement ?? null;
+    case 'upset': return this.childUpset?.chartContainerRef?.nativeElement ?? null;
+    case 'spread': return this.childSpread?.chartContainerRef?.nativeElement ?? null;
+  }
+}
+
+private downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+private async svgToPdf(svgElement: SVGElement, width: number, height: number): Promise<void> {
+  const pdf = new jsPDF({
+    orientation: width > height ? 'landscape' : 'portrait',
+    unit: 'pt',
+    format: [width, height]
+  });
+
+  await svg2pdf(svgElement, pdf, { x: 0, y: 0, width, height });
+
+  pdf.save(`hpo_presence_matrix_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+
+}

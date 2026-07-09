@@ -18,9 +18,8 @@
           <button class="btn btn-secondary" (click)="reloadMatrixData()" [disabled]="isLoading()">
             🔄 Refresh Data
           </button>
-          <button class="btn btn-primary" (click)="exportMatrixToSvg()" [disabled]="isLoading() || !matrixData() || activeView() !== 'overlap'">
-            📤 Export SVG Vector
-          </button>
+          <button class="btn btn-secondary" (click)="exportMatrix('svg')" [disabled]="isLoading() || !matrixData()">📤 SVG</button>
+          <button class="btn btn-secondary" (click)="exportMatrix('pdf')" [disabled]="isLoading() || !matrixData()">📄 PDF</button>
         </div>
       </div>
 
@@ -34,7 +33,7 @@
         
         @switch (activeView()) {
           @case ('overlap') {
-            <app-presence-matrix #overlapComponent [data]="data"></app-presence-matrix>
+            <app-overlap-plot #overlapComponent [data]="data" />
           }
           @case ('upset') {
             <app-upset-plot #upsetComponent [data]="upsetData()!" />
@@ -49,4 +48,8 @@
           <p>No active case data loaded to visualize.</p>
         </div>
       }
+       <div class="workspace-status-bar">
+    <span class="status-icon">ℹ️</span>
+    <span>{{ annotationService.workspaceSummaryText() }}</span>
+  </div>
     </div>

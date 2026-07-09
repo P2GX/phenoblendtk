@@ -19,7 +19,9 @@ import { SpreadPlotPayload } from '../models/phenoprofile_dto';
   `]
 })
 export class SpreadPlotComponent implements OnChanges {
-  @ViewChild('chartContainer', { static: true }) private chartContainer!: ElementRef;
+  //@ViewChild('chartContainer', { static: true }) private chartContainer!: ElementRef;
+    @ViewChild('chartContainer', { static: true }) chartContainerRef!: ElementRef<HTMLElement>;
+
   @Input({ required: true }) data!: SpreadPlotPayload;
 
   private readonly CATEGORY_ALIASES: Record<string, string> = {
@@ -40,7 +42,7 @@ export class SpreadPlotComponent implements OnChanges {
   }
 
   private renderSpreadPlot(): void {
-    const container = this.chartContainer.nativeElement;
+    const container = this.chartContainerRef.nativeElement;
     container.innerHTML = '';
 
     const { seriesLabels, categories } = this.data;

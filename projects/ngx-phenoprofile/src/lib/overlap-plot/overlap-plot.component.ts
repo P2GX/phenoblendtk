@@ -8,11 +8,11 @@ import { PresenceMatrixPayload } from '../models/phenoprofile_dto';
 
 
 @Component({
-  selector: 'app-presence-matrix',
+  selector: 'app-overlap-plot',
   standalone: true,
   template: `
     <div class="matrix-container" style="position: relative;">
-      <div #matrixSvgContainer></div>
+      <div #chartContainer></div>
       @if (tooltipData(); as data) {
         <div class="matrix-tooltip" [style.left.px]="data.x" [style.top.px]="data.y">
           <strong>{{ data.gene }}</strong> ↔ <strong>{{ data.hpoId }}</strong><br>
@@ -42,10 +42,10 @@ import { PresenceMatrixPayload } from '../models/phenoprofile_dto';
   imports: [DecimalPipe]
 })
 export class OverlapPlotComponent implements OnChanges {
-  @ViewChild('matrixSvgContainer', { static: true }) private chartContainer!: ElementRef;
+  @ViewChild('chartContainer', { static: true }) chartContainerRef!: ElementRef<HTMLElement>;
+
   @Input({ required: true }) data!: PresenceMatrixPayload;
 
-  // Track tooltips elegantly using an Angular signal
   readonly tooltipData = signal<{ x: number; y: number; gene: string; hpoId: string; hpoName: string; score: number } | null>(null);
 
   // Match your exact Matplotlib configuration profile colors
@@ -61,7 +61,7 @@ export class OverlapPlotComponent implements OnChanges {
 
   private renderMatrixChart(): void {
     // Clear out any stale layouts if rendering updates sequentially
-    const container = this.chartContainer.nativeElement;
+    const container = this.chartContainerRef.nativeElement;
     container.innerHTML = '';
 
     const genes = this.data.entities;

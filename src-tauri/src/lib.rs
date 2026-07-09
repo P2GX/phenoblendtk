@@ -47,6 +47,7 @@ pub fn run() {
             get_hpo_autocomplete,
             get_hpo_modifiers,
             get_hpo_parent_and_children_terms,
+            get_observed_hpo_count,
             get_overlap_plot,
             get_spread_plot_payload,
             get_upset_plot_payload,
@@ -214,6 +215,19 @@ fn get_spread_plot_payload( state: tauri::State<'_, Arc<AppState>>,
     let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
     singleton.get_spread_plot_payload(annotations)
   }
+  
+
+#[tauri::command]
+fn get_observed_hpo_count( state: tauri::State<'_, Arc<AppState>>,
+) -> usize {
+    let state_handle = state.inner().clone();
+    // We use this to show the number of HPOs in. the GUI. If this fails, just return zero, but we never expect this to happen
+    let singleton = match state_handle.phenoblendtk.lock() {
+        Ok(guard) => guard,
+        Err(_) => return 0,
+    };
+    singleton.get_observed_hpo_count()
+}
 
 
 /// This function supplies the autocompletion candidates for angular for the HPO

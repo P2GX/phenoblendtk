@@ -7,6 +7,7 @@ import { catchError } from 'rxjs/operators';
 import { ConfigService } from '../services/config-service';
 import { HpoTwostepComponent } from '../util/hpotwostep/hpotwostep.component';
 import { Router } from '@angular/router';
+import { AnnotationService } from '../services/annotation-service';
 
 
 
@@ -34,7 +35,7 @@ export class NewCaseComponent {
   private configService = inject(ConfigService);
   private notificationService = inject(NotificationService);
   private dialog = inject(MatDialog);
-  
+  private annotationService = inject(AnnotationService);
   protected hierarchyCache = signal<Record<string, HierarchyMapItem>>({});
 
   /**
@@ -47,9 +48,10 @@ export class NewCaseComponent {
     this.statusMessage.set('Parsing phenopacket payload in Rust engine...');
     this.errorDetails.set(null);
     try { 
-      this.configService.ingestPhenopacket(payload);
-      this.notificationService.showSuccess('Phenopacket ingested successfully.'); 
-      this.proceedToNextWindow();
+      await this.configService.ingestPhenopacket(payload);
+      const hpoCount = await this.configService.getObservedHpoCount();
+      this.notificationService.showSuccess(`Phenopacket input with ${hpoCount} observed HPO teams.`); 
+      this.proceedToNextWindow(hpoCount);
     } catch (error) {
       this.notificationService.showError('Ingestion failed.');
     } finally {
@@ -102,7 +104,7 @@ export class NewCaseComponent {
         const observedTerms: PolishedHpoAnnotation[] = polishedAnnotations.filter((annot: { excluded: any; }) => ! annot.excluded);
         const n_observed = observedTerms.length;
        if (n_observed > 0) {
-        this.proceedToNextWindow();
+        this.proceedToNextWindow(n_observed);
        } else {
           this.notificationService.showError(`Extracted ${polishedAnnotations.length} phenotype annotations but no observed HPOs!`)
        }
@@ -118,7 +120,8 @@ export class NewCaseComponent {
 
 
 
-  private proceedToNextWindow(): void {
+  private proceedToNextWindow(observedHpoCount: number): void {
+    this.annotationService.setObservedHpoCount(observedHpoCount)
     this.router.navigate(['/genedisease']);
   }
 }

@@ -259,6 +259,11 @@ impl PhenoblendSingleton {
         Ok(matches)
     }
 
+   pub fn get_observed_hpo_count(&self) -> usize {
+        self.individual.observed_hpos.len()
+    }
+
+
 }
 
 
