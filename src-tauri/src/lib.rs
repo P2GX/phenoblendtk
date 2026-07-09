@@ -12,6 +12,7 @@ use fenominal::FenominalSentence;
 use ga4ghphetools::dto::hpo_term_dto::HpoTermDuplet;
 use ga4ghphetools::tauri::models::HierarchyMapItem;
 use ontolius::ontology::OntologyTerms;
+use tauri_plugin_dialog::DialogExt;
 use tauri::{AppHandle, Emitter, WindowEvent};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -44,6 +45,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             autocomplete_gene_symbol,
             check_initialization_status,
+            export_svg_to_pdf,
             get_hpo_autocomplete,
             get_hpo_modifiers,
             get_hpo_parent_and_children_terms,
@@ -56,7 +58,8 @@ pub fn run() {
             load_hpoas,
             load_gene_disease_associations,
             mine_clinical_text,
-            perform_hpo_autocomplete
+            perform_hpo_autocomplete,
+            save_svg_file
         ])
         .setup(|app| {
             Ok(())
@@ -340,4 +343,76 @@ async fn autocomplete_gene_symbol(
         .map_err(|_| "Failed to lock state".to_string())?;
     let limit = 20;
     singleton.autocomplete_gene_symbol(query, limit)
+}
+
+
+#[tauri::command]
+async fn save_svg_file(
+    app: tauri::AppHandle,
+    svg_content: String,
+    default_filename: String,
+) -> Result<bool, String> {
+    let file_path = app
+        .dialog()
+        .file()
+        .set_file_name(&default_filename)
+        .add_filter("SVG Image", &["svg"])
+        .blocking_save_file();
+
+    match file_path {
+        Some(path) => {
+            let path = path.as_path().ok_or("Invalid path returned from dialog")?;
+            std::fs::write(path, svg_content).map_err(|e| e.to_string())?;
+            Ok(true)
+        }
+        None => Ok(false), // user cancelled — not an error
+    }
+}
+
+
+
+
+#[tauri::command]
+async fn export_svg_to_pdf(
+    app: tauri::AppHandle,
+    svg_content: String,
+    default_filename: String,
+) -> Result<bool, String> {
+    // 1. Parse the SVG into a usvg tree
+    let mut fontdb = svg2pdf::usvg::fontdb::Database::new();
+    fontdb.load_system_fonts();
+    let fontdb = Arc::new(fontdb);
+
+    let opt = svg2pdf::usvg::Options {
+        fontdb: fontdb.clone(),
+        ..Default::default()
+    };
+
+    let tree = svg2pdf::usvg::Tree::from_str(&svg_content, &opt)
+        .map_err(|e| format!("SVG parse error: {e}"))?;
+
+    // 2. Convert to PDF bytes
+    let pdf_bytes = svg2pdf::to_pdf(
+        &tree,
+        svg2pdf::ConversionOptions::default(),
+        svg2pdf::PageOptions::default(),
+    )
+    .map_err(|e| format!("PDF conversion error: {e}"))?;
+
+    // 3. Show native save dialog
+    let file_path = app
+        .dialog()
+        .file()
+        .set_file_name(&default_filename)
+        .add_filter("PDF Document", &["pdf"])
+        .blocking_save_file();
+
+    match file_path {
+        Some(path) => {
+            let path = path.as_path().ok_or("Invalid path returned from dialog")?;
+            std::fs::write(path, pdf_bytes).map_err(|e| e.to_string())?;
+            Ok(true)
+        }
+        None => Ok(false), // user cancelled — not an error
+    }
 }

@@ -71,5 +71,13 @@ export class ConfigService {
   async getObservedHpoCount(): Promise<number> {
     return invoke<number>('get_observed_hpo_count');
   }
+
+  async saveSvgFile(svgContent: string, defaultFilename: string): Promise<boolean> {
+    return invoke('save_svg_file', { svgContent, defaultFilename });
+  }
+
+  async exportSvgToPdf(svgContent: string, defaultFilename: string): Promise<boolean> {
+    return invoke('export_svg_to_pdf', { svgContent, defaultFilename });
+  }
   
 }

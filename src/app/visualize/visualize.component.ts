@@ -5,8 +5,7 @@ import { AnnotationService } from '../services/annotation-service';
 import { GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
 import { UpsetPlotComponent, SpreadPlotComponent, OverlapPlotComponent, SpreadPlotPayload, PresenceMatrixPayload, UpsetPlotPayload } from 'ngx-phenoprofile';
-import jsPDF from 'jspdf';
-import { svg2pdf } from 'svg2pdf.js';
+
 
 // 1. Define a literal type for your 3 view modes
 type VisualizationType = 'overlap' | 'upset' | 'spread';
@@ -121,7 +120,9 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
       console.error('Vector serialization failure:', error);
     }
   }*/
- async exportMatrix(format: ExportFormat): Promise<void> {
+ 
+
+    async exportMatrix(format: ExportFormat): Promise<void> {
   const view = this.activeView();
   if (view !== 'overlap' && view !== 'upset' && view !== 'spread') return;
 
@@ -141,20 +142,22 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
   svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   svgClone.setAttribute('version', '1.1');
 
-  const { width, height } = svgElement.getBoundingClientRect();
+  const serializer = new XMLSerializer();
+  const svgString = '<?xml version="1.0" standalone="no"?>\n' + serializer.serializeToString(svgClone);
+
   const dateStamp = new Date().toISOString().split('T')[0];
   const filenameBase = `hpo_${view}_plot_${dateStamp}`;
 
   try {
     switch (format) {
       case 'svg': {
-        const serializer = new XMLSerializer();
-        const svgString = '<?xml version="1.0" standalone="no"?>\n' + serializer.serializeToString(svgClone);
-        this.downloadBlob(new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' }), `${filenameBase}.svg`);
+        const saved = await this.configService.saveSvgFile(svgString, `${filenameBase}.svg`);
+        if (saved) this.notificationService.showSuccess('SVG exported successfully.');
         break;
       }
       case 'pdf': {
-        await this.svgToPdf(svgClone, width, height);
+        const saved = await this.configService.exportSvgToPdf(svgString, `${filenameBase}.pdf`);
+        if (saved) this.notificationService.showSuccess('PDF exported successfully.');
         break;
       }
     }
@@ -164,6 +167,7 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
   }
 }
 
+
 private getChartContainerElement(view: VisualizationType): HTMLElement | null {
   switch (view) {
     case 'overlap': return this.childMatrix?.chartContainerRef?.nativeElement ?? null;
@@ -172,28 +176,7 @@ private getChartContainerElement(view: VisualizationType): HTMLElement | null {
   }
 }
 
-private downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
 
-private async svgToPdf(svgElement: SVGElement, width: number, height: number): Promise<void> {
-  const pdf = new jsPDF({
-    orientation: width > height ? 'landscape' : 'portrait',
-    unit: 'pt',
-    format: [width, height]
-  });
-
-  await svg2pdf(svgElement, pdf, { x: 0, y: 0, width, height });
-
-  pdf.save(`hpo_presence_matrix_${new Date().toISOString().split('T')[0]}.pdf`);
-}
 
 
 }
