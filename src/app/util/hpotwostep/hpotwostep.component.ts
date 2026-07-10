@@ -66,9 +66,6 @@ export class HpoTwostepComponent implements OnDestroy {
 
   protected onTextMiningSuccess(parsedSentences: FenominalSentence[]): void {
     this.notificationService.showSuccess(`Parsed sentences: n=${parsedSentences.length}` );
-    parsedSentences.forEach(s => { console.log("xyz"); console.log(s);
-      
-    });
     this.curatedSentences.set(parsedSentences);
     console.log(`We got ${this.curatedSentences().length} curated sentences`)
     this.currentStep.set(2);

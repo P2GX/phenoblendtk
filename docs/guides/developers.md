@@ -17,6 +17,18 @@ Now ensure we are using this latest version
 npm install ng-hpo-uikit@file:../ng-hpo-uikit/dist/ng-hpo-uikit/ --force
 ```
 
+For rapid iteration with the library, add the following to `package.json`
+```json
+ "ng-hpo-uikit": "file:../ng-hpo-uikit/dist/ng-hpo-uikit"
+```
+otherwise use
+
+```json
+  "ng-hpo-uikit": "github:P2GX/ng-hpo-uikit#dist-build",
+```
+
+
+
 
 ## storybook
 
@@ -33,3 +45,16 @@ npx nx run ngx-phenoprofile:build-storybook
 # rm -rf dist (if needed)
 npx nx run ngx-phenoprofile:storybook
 ```
+
+
+## release
+
+
+
+
+Add and commit the latest release
+Push a tag
+
+```bash
+git tag v0.3.7 
+git push origin v0.3.7
