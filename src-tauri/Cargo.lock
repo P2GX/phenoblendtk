@@ -3664,7 +3664,7 @@ dependencies = [
 
 [[package]]
 name = "phenoblendtk"
-version = "0.3.7"
+version = "0.3.9"
 dependencies = [
  "csv",
  "dirs",
