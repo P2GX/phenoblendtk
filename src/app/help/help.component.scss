@@ -1,0 +1,93 @@
+.info-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+.info-title {
+  margin: 0 0 12px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.info-intro {
+  margin: 0 0 32px;
+  font-size: 1rem;
+  color: #475569;
+  max-width: 60ch;
+}
+
+.info-subtitle {
+  margin: 32px 0 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+// First subtitle shouldn't get the full 32px top gap since it directly
+// follows the intro paragraph, which already has its own bottom margin.
+.info-intro + .info-subtitle {
+  margin-top: 0;
+}
+
+.info-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  li {
+    position: relative;
+    padding: 8px 0 8px 20px;
+    font-size: 0.95rem;
+    color: #334155;
+
+    // Small accent marker instead of a default bullet, keeps things tidy
+    // and lines up cleanly regardless of whether the <li> wraps to two lines.
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 16px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #0ea5e9;
+    }
+  }
+
+  a {
+    color: #0369a1;
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      color: #0c4a6e;
+      border-bottom-color: currentColor;
+    }
+
+    &:visited {
+      color: #7e22ce;
+    }
+
+    // External-link cue, since every link here opens in a new tab
+    &[target="_blank"]::after {
+      content: '↗';
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 0.85em;
+      opacity: 0.6;
+    }
+  }
+}

@@ -10,4 +10,12 @@
       {{ tab.label }}
     </a>
   }
+  <a
+    [routerLink]="'/help'"
+    routerLinkActive="nav-link--active"
+    class="nav-link nav-link--help"
+    (click)="logClick('/help')"
+  >
+    Help
+  </a>
 </nav>

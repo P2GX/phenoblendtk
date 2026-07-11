@@ -32,3 +32,12 @@
   background-color: #374151;  
   font-weight: 600;
 }
+
+.app-nav {
+  display: flex;
+  align-items: center;
+}
+
+.nav-link--help {
+  margin-left: auto;
+}
