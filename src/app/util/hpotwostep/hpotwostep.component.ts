@@ -5,7 +5,7 @@ import { HierarchyMapItem, HpoTermMinimal, OntologyMatch, PolishedHpoAnnotation 
 import { HpoMiningComponent } from 'ng-hpo-uikit';
 import { NotificationService } from 'ng-hpo-uikit';
 import { HpoPolishingWorkspaceComponent } from 'ng-hpo-uikit';
-import { FenominalSentence } from 'ng-hpo-uikit';
+import { FenominalSentence, FenominalSegment } from 'ng-hpo-uikit';
 import { Observable } from 'rxjs/internal/Observable';
 
 
@@ -89,6 +89,31 @@ export class HpoTwostepComponent implements OnDestroy {
   @HostListener('document:keydown.escape')
   protected onKeydownHandler(): void {
     this.close();
+  }
+
+  onSegmentsReplaced(event: {
+    sentence: FenominalSentence;
+    segmentIndex: number;
+    newSegments: FenominalSegment[];
+  }): void {
+      console.log('[parent] onSegmentsReplaced fired with:', event);
+      const found = this.curatedSentences().some(s => s === event.sentence);
+  const foundByStart = this.curatedSentences().some(s => s.start === event.sentence.start);
+  console.log('[parent] reference match:', found, '| start match:', foundByStart);
+    this.curatedSentences.update(all =>
+      all.map(s =>
+         s.start !== event.sentence.start
+          ? s
+          : {
+              ...s,
+              segments: [
+                ...s.segments.slice(0, event.segmentIndex),
+                ...event.newSegments,
+                ...s.segments.slice(event.segmentIndex + 1),
+              ],
+            }
+      )
+    );
   }
 
   protected close(): void {

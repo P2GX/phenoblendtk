@@ -79,5 +79,9 @@ export class ConfigService {
   async exportSvgToPdf(svgContent: string, defaultFilename: string): Promise<boolean> {
     return invoke('export_svg_to_pdf', { svgContent, defaultFilename });
   }
+
+  async addObservedHposFromNER(observed: string[]): Promise<null> {
+    return invoke<null>('add_observed_hpos_from_ner', {observed});
+  }
   
 }

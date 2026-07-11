@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FenominalSentence, HierarchyMapItem, HpoTermMinimal, NotificationService, OntologyMatch, PhenopacketLoaderComponent, PolishedHpoAnnotation } from 'ng-hpo-uikit';
+import { HierarchyMapItem, HpoTermMinimal, NotificationService, OntologyMatch, PhenopacketLoaderComponent, PolishedHpoAnnotation } from 'ng-hpo-uikit';
 import { MatDialog } from '@angular/material/dialog';
 import { from, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -102,6 +102,8 @@ export class NewCaseComponent {
     dialogRef.afterClosed().subscribe((polishedAnnotations?: PolishedHpoAnnotation[]) => {
       if (polishedAnnotations) {
         const observedTerms: PolishedHpoAnnotation[] = polishedAnnotations.filter((annot: { excluded: any; }) => ! annot.excluded);
+        const termIds = observedTerms.map(t => t.termId);
+        this.configService.addObservedHposFromNER(termIds);
         const n_observed = observedTerms.length;
        if (n_observed > 0) {
         this.proceedToNextWindow(n_observed);

@@ -69,58 +69,13 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
       this.matrixData.set(overlapResult);
       this.spreadData.set(spreadResult);
     } catch (err) {
-      console.error('Failed fetching matrix values:', err);
+      this.notificationService.showError(`Failed fetching matrix values: ${err}.`);
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  /*
-  exportMatrixToSvg(): void {
-    // Kept safe by disabling the button unless activeView() === 'matrix'
-    const view = this.activeView();
-    if (view !== 'overlap' && view !== 'upset' && view !== 'spread') return;
 
-    try {
-      let targetElement: HTMLElement | null = null;
-      if (view === 'overlap' && this.childMatrix) {
-        targetElement = this.childMatrix['chartContainer'].nativeElement;
-      } else if (view === 'upset' && this.childUpset) {
-        targetElement = this.childUpset['chartContainer'].nativeElement;
-      } else if (view === 'spread' && this.childSpread) {
-         targetElement = this.childSpread['chartContainer'].nativeElement;
-      }
-      const svgElement = d3.select(targetElement).select('svg').node() as SVGElement;
-      if (!svgElement) {
-        alert("Matrix visualization element not found.");
-        return;
-      }
-
-      const svgClone = svgElement.cloneNode(true) as SVGElement;
-      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      svgClone.setAttribute('version', '1.1');
-
-      const serializer = new XMLSerializer();
-      let svgString = serializer.serializeToString(svgClone);
-      svgString = '<?xml version="1.0" standalone="no"?>\n' + svgString;
-
-      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-      const blobUrl = URL.createObjectURL(svgBlob);
-
-      const downloadLink = document.createElement('a');
-      downloadLink.href = blobUrl;
-      downloadLink.download = `hpo_presence_matrix_${new Date().toISOString().split('T')[0]}.svg`;
-      
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      
-      document.body.removeChild(downloadLink);
-      URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error('Vector serialization failure:', error);
-    }
-  }*/
- 
 
     async exportMatrix(format: ExportFormat): Promise<void> {
   const view = this.activeView();

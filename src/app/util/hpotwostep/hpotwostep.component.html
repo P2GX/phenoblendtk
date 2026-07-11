@@ -23,6 +23,7 @@
           [autocompleteProvider]="autocompleteProvider"
           [hierarchyProvider]="hierarchyProvider"
           [availableModifiers]="availableModifiers()"
+          (segmentsReplaced)="onSegmentsReplaced($event)"
           (complete)="onCurationComplete($event)"
           (cancel)="dialogRef.close()">
         </hpo-polishing-workspace>

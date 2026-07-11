@@ -5,6 +5,8 @@ mod hpo;
 mod model;
 mod blend;
 mod util;
+use ga4ghphetools::dto::etl_dto::SexCode::O;
+use ontolius::TermId;
 use serde::{self,Serialize};
 
 use fenominal::OntologyMatch;
@@ -43,6 +45,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())     
         .invoke_handler(tauri::generate_handler![
+            add_observed_hpos_from_ner,
             autocomplete_gene_symbol,
             check_initialization_status,
             export_svg_to_pdf,
@@ -101,7 +104,6 @@ fn ingest_phenopacket(
     // 3. Now convert the sanitized JSON value into the official Phenopacket type
     let phenopacket: Phenopacket = serde_json::from_value(json_value)
         .map_err(|e| format!("Phenopacket Schema validation error: {}", e))?;
-    let identifier = phenopacket.id.clone();
     singleton.ingest_ppkt(phenopacket)?;
     Ok(())
 }
@@ -133,6 +135,17 @@ async fn load_hpo(
     Ok(())
 }
 
+
+#[tauri::command]
+async fn add_observed_hpos_from_ner(
+    state: tauri::State<'_, Arc<AppState>>,
+    observed: Vec<String>
+) -> Result<(), String>{
+    let state_handle = state.inner().clone();
+    let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
+    singleton.add_observed_hpos_from_ner(observed);
+    Ok(())
+}
 
 #[tauri::command]
 async fn load_hpoas(

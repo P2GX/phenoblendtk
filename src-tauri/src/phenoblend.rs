@@ -97,6 +97,25 @@ impl PhenoblendSingleton {
         Ok(())
     }
 
+    pub fn add_observed_hpos_from_ner(
+        &mut self,
+        observed: Vec<String>
+    ) -> Result<(), String>{
+        let mut observed_tid: Vec<TermId> = Vec::new();
+        for obs in observed {
+            let tid: TermId = obs.parse().map_err(|e| format!("Could not parse {obs}"))?;
+            observed_tid.push(tid);
+        }
+        let proband = Proband { 
+            id: String::default(), 
+            gene_list: vec![], 
+            disease_list: vec![], 
+            observed_hpos: observed_tid
+         };
+        self.individual = proband;
+        Ok(())
+    }
+
     pub fn calculate_presence_matrix(
         &mut self, 
         annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
