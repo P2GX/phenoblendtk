@@ -39,8 +39,6 @@ pub fn load_gene_disease_associations<P: AsRef<Path>>(
         let row = result.map_err(|e| {
             PhenoblendError::parse_error(format!("TSV deserialization failed: {}", e))
         })?;
-         // Filter by textual prefix 
-        // ORPHA/DECIPHER rows never need to become a TermId at all.
         if !row.disease_id.starts_with(OMIM_PREFIX) {
             continue;
         }
