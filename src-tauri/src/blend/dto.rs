@@ -5,20 +5,21 @@ use serde::{Serialize, Deserialize};
 /// Represents the scores for one HPO term in the presence matrix
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PresenceMatrixItem {
+pub struct OverlapPlotItem {
     pub hpo_id: String,
     pub hpo_name: String,
     /// A map matching gene symbols to their calculated matrix match scores [0.0 - 1.0]
     pub scores: HashMap<String, f64>,
 }
 
-impl PresenceMatrixItem {
+impl OverlapPlotItem {
     pub fn new(hpo_id: &TermId, hpo: Arc<FullCsrOntology>) -> Self {
         let term = hpo.term_by_id(hpo_id);
         let label = match term {
             Some(t) => t.name().to_string(),
             None => "n/a".to_string() // should never happen
         };
+        println!("OverlapPlotItem::new {}-{}", label, hpo_id);
         Self {
             hpo_id: hpo_id.to_string(),
             hpo_name: label,
@@ -37,15 +38,15 @@ impl PresenceMatrixItem {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PresenceMatrixPayload {
+pub struct OverlapPlotPayload {
     /// Ordered array of gene symbols or diseases following column sorting block rules
     pub entities: Vec<String>,
     /// Ordered rows following phenotype grouping tiers
-    pub columns: Vec<PresenceMatrixItem>,
+    pub columns: Vec<OverlapPlotItem>,
 }
 
 
-impl PresenceMatrixPayload {
+impl OverlapPlotPayload {
     pub fn n_columns(&self) -> usize {
         self.columns.len()
     }

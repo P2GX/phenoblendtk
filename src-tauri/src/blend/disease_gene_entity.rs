@@ -1,10 +1,10 @@
 use std::{collections::{HashMap, HashSet},  sync::Arc};
 
-use ontolius::{TermId, ontology::{HierarchyQueries, csr::FullCsrOntology}};
+use ontolius::{TermId, ontology::{HierarchyQueries, OntologyTerms, csr::FullCsrOntology}, term::MinimalTerm};
 use ontolius::ontology::HierarchyWalks;
 use tokio::fs::create_dir;
-use crate::{blend::dto::{PresenceMatrixItem, PresenceMatrixPayload, SpreadPlotPayload, UpsetPlotPayload}, hpoa::disease_model::GeneDiseaseAssociation, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
-
+use crate::{blend::dto::{OverlapPlotItem, OverlapPlotPayload, SpreadPlotPayload, UpsetPlotPayload}, hpoa::disease_model::GeneDiseaseAssociation, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
+use log::{trace, debug, info, warn, error};
 
 /// This is the structure we use for the phenoblend analysis. We have one such entity for each gene, and the entities can have one or more diseases associated with the gene
 /// disease_hpo_ids then has all the observed HPO identifiers for all of the diseases
@@ -47,14 +47,46 @@ impl GeneDiseaseEntity {
         })
     }
 
-    
+
+    fn debug_print_term(tid: &TermId,
+        hpo: Arc<FullCsrOntology>, message: &str) {
+            match hpo.term_by_id(tid) {
+                Some(t) => { trace!("{}: {} ({})", message, t.name(), tid);},
+                None => { trace!("{}: Could not find label for {}", message, tid); }
+            }
+        }
+
+
+    /// We consider a term from the phenopacket (tid) and ask if there is an 
+    /// exact match in a GeneDisease entity. If the GDE is annotated to the same
+    /// term, obviously there is an exact match. By the true path rule, if the 
+    /// GDE is annotated to a descendent of the term, then there is also an exact 
+    /// match. For instance, if the proband is annotated to "Cataract" and the GDE
+    /// is annotated to "Nuclear cataract", then the disease is implicitly also annotated
+    /// to "Cataract" and we have an exact match.
      pub fn is_perfect_match(
-        tid: &TermId,
+        ppkt_tid: &TermId,
         gde: &GeneDiseaseEntity,
         hpo: Arc<FullCsrOntology>) -> bool {
-            let anc_terms: HashSet<TermId> = hpo.iter_term_and_ancestor_ids(tid).cloned().collect();
-            for anc in anc_terms {
-                if gde.disease_hpo_ids.contains(&anc) {
+            // 1. exact match
+            if gde.disease_hpo_ids.contains(ppkt_tid) {
+                 trace!(
+                        "is_perfect_match term={} disease={} perfect_match={}",
+                        ppkt_tid,
+                        gde.gene_symbol,
+                        ppkt_tid
+                    );
+                return true;
+            }
+            // 2. match to a descendent
+            for disease_hpo_id in gde.disease_hpo_ids.iter() {
+                if hpo.is_descendant_of(disease_hpo_id, ppkt_tid) {
+                    trace!(
+                        "is_perfect_match term={} disease={} perfect_match={}",
+                        ppkt_tid,
+                        gde.gene_symbol,
+                        disease_hpo_id
+                    );
                     return true;
                 }
             }
@@ -62,24 +94,26 @@ impl GeneDiseaseEntity {
     }
 
 
-    pub fn get_presence_matrix_payload(
+    pub fn get_overlap_matrix_payload(
         proband: Proband, 
         gde_list: &Vec<GeneDiseaseEntity>, 
         disease_counts: &HashMap<TermId, usize>,
         hpo: Arc<FullCsrOntology>
-    ) -> PresenceMatrixPayload {
-        let mut term_to_item_d: HashMap<TermId, PresenceMatrixItem> = HashMap::new();
+    ) -> OverlapPlotPayload {
+        let mut term_to_item_d: HashMap<TermId, OverlapPlotItem> = HashMap::new();
         let mut gene_entities: Vec<String> = gde_list
             .iter()
             .map(|gde| gde.gene_symbol.clone())
             .collect();
         gene_entities.sort();
+        trace!("get_overlap_matrix_payload");
+        trace!("gene_entities {:?}", gene_entities);
 
         for tid in proband.observed_hpos.iter() {
             for gde in gde_list {
                 let pm_item = term_to_item_d
                     .entry(tid.clone())
-                    .or_insert_with(|| PresenceMatrixItem::new(tid, Arc::clone(&hpo)));
+                    .or_insert_with(|| OverlapPlotItem::new(tid, Arc::clone(&hpo)));
                 if Self::is_perfect_match(tid, gde, Arc::clone(&hpo)) {
                     pm_item.add_perfect_match(&gde.gene_symbol);
                 } else {
@@ -88,8 +122,8 @@ impl GeneDiseaseEntity {
                 }
             }
         }
-        let rows: Vec<PresenceMatrixItem> = term_to_item_d.into_values().collect();
-        PresenceMatrixPayload { entities: gene_entities, columns: rows }
+        let rows: Vec<OverlapPlotItem> = term_to_item_d.into_values().collect();
+        OverlapPlotPayload { entities: gene_entities, columns: rows }
     }
 
     pub fn get_upset_plot_payload(
@@ -129,18 +163,37 @@ impl GeneDiseaseEntity {
         hpo: Arc<FullCsrOntology>,
         disease_counts: &HashMap<TermId, usize>) -> f64 {
             let pheno_hpo_count = *disease_counts.get(query_hpo).unwrap_or(&0);
+            //trace!("partial_match_score-pheno_hpo_count={}", pheno_hpo_count);
+            let mut not_anc = 0;
             if pheno_hpo_count > 0 {
                 // Find the maximum disease count among the more specific descendant terms
                 let mut max_geno_hpo_count = 0;
-                for hpo_id in &gde.disease_hpo_ids {
-                    if hpo.is_ancestor_of(hpo_id, query_hpo) {
-                        let anc_count = *disease_counts.get(hpo_id).unwrap_or(&0);
+                for disease_hpo_id in &gde.disease_hpo_ids {
+                    if hpo.is_descendant_of(query_hpo, disease_hpo_id ) {
+                        let anc_count = *disease_counts.get(disease_hpo_id).unwrap_or(&0);
                         if anc_count > max_geno_hpo_count {
                             max_geno_hpo_count = anc_count;
                         }
+                        trace!(
+                        "{} descendant of ? {} (Y/N:{}) count={} pheno_hpo_count={}",
+                        disease_hpo_id,
+                        query_hpo,
+                        hpo.is_descendant_of(query_hpo, disease_hpo_id),
+                        disease_counts.get(disease_hpo_id).unwrap_or(&0),
+                        pheno_hpo_count
+                    );
+                    } else {
+                        not_anc += 1;
                     }
+                    
                 }
-                let score = (max_geno_hpo_count / pheno_hpo_count) as f64;
+                trace!("Not ancester {}", not_anc);
+                println!("max_geno_hpo_count={}", max_geno_hpo_count);
+                let score = pheno_hpo_count  as f64 /  max_geno_hpo_count as f64;
+                if score > 0 as f64{
+                    trace!("score={}", score);
+                }
+                
                 score
             } else {
                 0.0

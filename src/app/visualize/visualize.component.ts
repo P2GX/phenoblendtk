@@ -1,25 +1,37 @@
-import { Component, ViewChild, signal, computed, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  ViewChild,
+  signal,
+  computed,
+  inject,
+  OnInit,
+} from '@angular/core';
 import * as d3 from 'd3';
 import { ConfigService } from '../services/config-service';
 import { AnnotationService } from '../services/annotation-service';
 import { GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
-import { UpsetPlotComponent, SpreadPlotComponent, OverlapPlotComponent, SpreadPlotPayload, PresenceMatrixPayload, UpsetPlotPayload } from 'ngx-phenoprofile';
-
+import {
+  UpsetPlotComponent,
+  SpreadPlotComponent,
+  OverlapPlotComponent,
+  SpreadPlotPayload,
+  PresenceMatrixPayload,
+  UpsetPlotPayload,
+} from 'ngx-phenoprofile';
 
 // 1. Define a literal type for your 3 view modes
 type VisualizationType = 'overlap' | 'upset' | 'spread';
-type ExportFormat = 'svg' |  'pdf';
+type ExportFormat = 'svg' | 'pdf';
 
 @Component({
   selector: 'app-presence-visualizer',
   standalone: true,
-  imports: [OverlapPlotComponent, UpsetPlotComponent, SpreadPlotComponent], 
+  imports: [OverlapPlotComponent, UpsetPlotComponent, SpreadPlotComponent],
   templateUrl: './visualize.component.html',
-   styleUrls: ['./visualize.component.scss']
+  styleUrls: ['./visualize.component.scss'],
 })
 export class PhenotypeProfileVisualizerComponent implements OnInit {
-
   @ViewChild('overlapComponent') private childMatrix!: OverlapPlotComponent;
   @ViewChild('upsetComponent') private childUpset!: UpsetPlotComponent;
   @ViewChild('spreadComponent') private childSpread!: SpreadPlotComponent;
@@ -37,9 +49,12 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
   // Computed title depending on which view is selected
   readonly currentTitle = computed(() => {
     switch (this.activeView()) {
-      case 'overlap': return 'Phenotypic Overlap Plot';
-      case 'upset': return 'Phenotypic Upset Plot';
-      case 'spread': return 'Phenotypic Spread Plot';
+      case 'overlap':
+        return 'Phenotypic Overlap Plot';
+      case 'upset':
+        return 'Phenotypic Upset Plot';
+      case 'spread':
+        return 'Phenotypic Spread Plot';
     }
   });
 
@@ -56,87 +71,118 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
   async reloadMatrixData(): Promise<void> {
     this.isLoading.set(true);
     try {
-      const selectedAnnotations: GeneDiseaseAssociation[] = this.annotationService.allSelectedAssociations();
+      const selectedAnnotations: GeneDiseaseAssociation[] =
+        this.annotationService.allSelectedAssociations();
       if (selectedAnnotations.length < 2) {
         const errMsg = `At least two gene/disease pairs required to perform analysis but only ${selectedAnnotations.length} available.`;
         this.notificationService.showError(errMsg);
         return;
       }
-      const recordData = Object.fromEntries(this.annotationService.selectedAssociations());
-      const overlapResult = await this.configService.getOverlapPlotData(recordData);
-      const upsetResult = await this.configService.getUpsetPlotPayload(recordData);
-      const spreadResult = await this.configService.getSpreadPlotPayload(recordData);
+      const recordData = Object.fromEntries(
+        this.annotationService.selectedAssociations(),
+      );
+      const overlapResult =
+        await this.configService.getOverlapPlotData(recordData);
+      const upsetResult =
+        await this.configService.getUpsetPlotPayload(recordData);
+      const spreadResult =
+        await this.configService.getSpreadPlotPayload(recordData);
       this.upsetData.set(upsetResult);
       this.matrixData.set(overlapResult);
       this.spreadData.set(spreadResult);
     } catch (err) {
-      this.notificationService.showError(`Failed fetching matrix values: ${err}.`);
+      this.notificationService.showError(
+        `Failed fetching matrix values: ${err}.`,
+      );
     } finally {
       this.isLoading.set(false);
     }
   }
 
+  async exportMatrix(format: ExportFormat): Promise<void> {
+    const view = this.activeView();
+    if (view !== 'overlap' && view !== 'upset' && view !== 'spread') return;
 
-
-    async exportMatrix(format: ExportFormat): Promise<void> {
-  const view = this.activeView();
-  if (view !== 'overlap' && view !== 'upset' && view !== 'spread') return;
-
-  const targetElement = this.getChartContainerElement(view);
-  if (!targetElement) {
-    this.notificationService.showError('Visualization element not found.');
-    return;
-  }
-
-  const svgElement = d3.select(targetElement).select('svg').node() as SVGElement | null;
-  if (!svgElement) {
-    this.notificationService.showError('No SVG content found for the active view.');
-    return;
-  }
-
-  const svgClone = svgElement.cloneNode(true) as SVGElement;
-  svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  svgClone.setAttribute('version', '1.1');
-
-  const serializer = new XMLSerializer();
-  const svgString = '<?xml version="1.0" standalone="no"?>\n' + serializer.serializeToString(svgClone);
-
-  const dateStamp = new Date().toISOString().split('T')[0];
-  const filenameBase = `hpo_${view}_plot_${dateStamp}`;
-
-  try {
-    switch (format) {
-      case 'svg': {
-        const saved = await this.configService.saveSvgFile(svgString, `${filenameBase}.svg`);
-        if (saved) this.notificationService.showSuccess('SVG exported successfully.');
-        break;
-      }
-      case 'pdf': {
-        const saved = await this.configService.exportSvgToPdf(svgString, `${filenameBase}.pdf`);
-        if (saved) this.notificationService.showSuccess('PDF exported successfully.');
-        break;
-      }
+    const targetElement = this.getChartContainerElement(view);
+    if (!targetElement) {
+      this.notificationService.showError('Visualization element not found.');
+      return;
     }
-  } catch (error) {
-    console.error(`${format.toUpperCase()} export failed:`, error);
-    this.notificationService.showError(`Failed to export as ${format.toUpperCase()}.`);
+
+    const svgElement = d3
+      .select(targetElement)
+      .select('svg')
+      .node() as SVGElement | null;
+    if (!svgElement) {
+      this.notificationService.showError(
+        'No SVG content found for the active view.',
+      );
+      return;
+    }
+
+    const svgClone = svgElement.cloneNode(true) as SVGElement;
+    svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svgClone.setAttribute('version', '1.1');
+
+    const serializer = new XMLSerializer();
+    const svgString =
+      '<?xml version="1.0" standalone="no"?>\n' +
+      serializer.serializeToString(svgClone);
+
+    const dateStamp = new Date().toISOString().split('T')[0];
+    const filenameBase = `hpo_${view}_plot_${dateStamp}`;
+
+    try {
+      switch (format) {
+        case 'svg': {
+          const saved = await this.configService.saveSvgFile(
+            svgString,
+            `${filenameBase}.svg`,
+          );
+          if (saved)
+            this.notificationService.showSuccess('SVG exported successfully.');
+          break;
+        }
+        case 'pdf': {
+          const saved = await this.configService.exportSvgToPdf(
+            svgString,
+            `${filenameBase}.pdf`,
+          );
+          if (saved)
+            this.notificationService.showSuccess('PDF exported successfully.');
+          break;
+        }
+      }
+    } catch (error) {
+      console.error(`${format.toUpperCase()} export failed:`, error);
+      this.notificationService.showError(
+        `Failed to export as ${format.toUpperCase()}.`,
+      );
+    }
   }
-}
 
-
-private getChartContainerElement(view: VisualizationType): HTMLElement | null {
-  switch (view) {
-    case 'overlap': return this.childMatrix?.chartContainerRef?.nativeElement ?? null;
-    case 'upset': return this.childUpset?.chartContainerRef?.nativeElement ?? null;
-    case 'spread': return this.childSpread?.chartContainerRef?.nativeElement ?? null;
+  private getChartContainerElement(
+    view: VisualizationType,
+  ): HTMLElement | null {
+    switch (view) {
+      case 'overlap':
+        return this.childMatrix?.chartContainerRef?.nativeElement ?? null;
+      case 'upset':
+        return this.childUpset?.chartContainerRef?.nativeElement ?? null;
+      case 'spread':
+        return this.childSpread?.chartContainerRef?.nativeElement ?? null;
+    }
   }
-}
 
-downloadSummary() {
-  const dataType: VisualizationType = this.activeView();
-}
-
-
-
-
+  downloadSummary() {
+    const dataType: VisualizationType = this.activeView();
+    const recordData = Object.fromEntries(
+      this.annotationService.selectedAssociations(),
+    );
+    try {
+      this.configService.downloadExcelSummary(dataType, recordData);
+    } catch (err) {
+      this.notificationService.showError(`${err}`);
+    }
+  }
 }

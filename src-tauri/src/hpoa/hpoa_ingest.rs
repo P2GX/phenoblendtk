@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use log::trace;
 use oboannotation::hpo::Frequency::Frequency;
 use oboannotation::io::AnnotationLoader;
 use oboannotation::hpo::io::{HpoAnnotationLines, HpoAnnotationLoader};
@@ -26,7 +27,7 @@ pub fn load_hpoa_d(fpath_hpoa: &str) -> Result<HashMap<TermId, SimpleDiseaseMode
     
     let mut model_map: HashMap<TermId, HashSet<TermId>> = HashMap::new();
     let mut disease_id_to_name_d: HashMap<TermId, String> = HashMap::new();
-    let mut excluded_map: HashMap<TermId, HashSet<TermId>> = HashMap::new(); // Marked mut for the post-processing phase
+    let mut excluded_map: HashMap<TermId, HashSet<TermId>> = HashMap::new();
     let mut simple_model_d: HashMap<TermId, SimpleDiseaseModel> = HashMap::new();
     for line in data.lines {
         let disease_id = line.disease_id;
@@ -48,6 +49,14 @@ pub fn load_hpoa_d(fpath_hpoa: &str) -> Result<HashMap<TermId, SimpleDiseaseMode
                 .entry(disease_id.clone())
                 .or_insert_with(HashSet::new)
                 .insert(hpo_term_id.clone());
+            if hpo_term_id.to_string() == "HP:0000997" {
+                trace!(
+                    "Loaded {} with term {} freq {}",
+                    disease_id,
+                    hpo_term_id,
+                    freq
+                );
+            }
         } else {
             excluded_map
                 .entry(disease_id.clone())

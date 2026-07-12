@@ -9,7 +9,7 @@ use phenopackets::schema::v2::Phenopacket;
 
 
 use crate::blend::dto::{SpreadPlotPayload, UpsetPlotPayload};
-use crate::{blend::dto::PresenceMatrixPayload, hpoa::disease_model::SimpleDiseaseModel, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
+use crate::{blend::dto::OverlapPlotPayload, hpoa::disease_model::SimpleDiseaseModel, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
 use crate::util::settings::PhenoblendSettings;
 
@@ -116,21 +116,23 @@ impl PhenoblendSingleton {
         Ok(())
     }
 
-    pub fn calculate_presence_matrix(
+    pub fn calculate_overlap_matrix(
         &mut self, 
         annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
-    ) -> Result<PresenceMatrixPayload, String> {
+    ) -> Result<OverlapPlotPayload, String> {
         let hpo = self.hpo.as_ref()
             .ok_or_else(|| "Missing required resource: HPO Ontology".to_string())?;
         
         let proband = self.individual.clone();
+        println!("proband: {:?}", proband);
+        println!("Annotations: {:?}", annotations);
         
-        let pm = crate::blend::presence_matrix::calculate_presence_matrix(
+        let pm = crate::blend::overlap_matrix::calculate_overlap_matrix(
             hpo.clone(), 
             &annotations, 
             &self.disease_count_d, 
             proband)?;
-        Ok(crate::blend::presence_matrix::sort_presence_payload(pm))
+        Ok(crate::blend::overlap_matrix::sort_presence_payload(pm))
     }
 
     pub fn get_upset_plot_payload(
@@ -282,6 +284,20 @@ impl PhenoblendSingleton {
         self.individual.observed_hpos.len()
     }
 
+    pub fn output_excel(
+        &mut self, 
+        data_type: String, 
+        annotations: HashMap<String, Vec<GeneDiseaseAssociation>>, 
+        path_str: String) 
+    -> Result<(), String> {
+        if data_type == "overlap" {
+            let payload = self.calculate_overlap_matrix(annotations)?;
+            crate::excel::overlap_to_excel::export_overlap_plot_to_xlsx(& payload, &path_str)
+                .map_err(|e| format!("Could not output overlap Excel file: {e}"))?;
+        }
+        Err(format!("{data_type} excel export not supported yet"))
+    }
+
 
 }
 
@@ -312,6 +328,7 @@ impl Default for PhenoblendSingleton {
         }
         if let Some(omim_map) = settings.get_hpoa_path().ok().and_then(|path| crate::hpoa::hpoa_ingest::load_hpoa_d(&path).ok()) {
             singleton.omim_disease_models = Some(omim_map);
+            singleton.calculate_disease_counts();
         }
         if let Some(g2d) = settings.get_g2d_path().ok().and_then(|path| crate::hpoa::gene_to_disease::load_gene_disease_associations(&path).ok()) {
             singleton.gene_to_disease_d = Some(g2d);

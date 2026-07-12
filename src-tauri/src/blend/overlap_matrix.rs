@@ -4,10 +4,12 @@ use std::sync::Arc;
 use ontolius::{TermId, ontology::csr::FullCsrOntology};
 
 use crate::blend::disease_gene_entity::GeneDiseaseEntity;
-use crate::blend::dto::PresenceMatrixItem;
-use crate::blend::dto::PresenceMatrixPayload;
+use crate::blend::dto::OverlapPlotItem;
+use crate::blend::dto::OverlapPlotPayload;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
 use crate::model::proband::Proband;
+use log::{trace, debug, info, warn, error};
+
 
 /// Converts raw gene->GDA mappings into clean entities (order not significant here).
 fn build_entity_list(
@@ -21,17 +23,17 @@ fn build_entity_list(
     Ok(gd_entry_list)
 }
 
-pub fn calculate_presence_matrix(
+pub fn calculate_overlap_matrix(
     hpo: Arc<FullCsrOntology>,
     annotation_map: &HashMap<String, Vec<GeneDiseaseAssociation>>,
     disease_counts: &HashMap<TermId, usize>,
     proband: Proband,
-) -> Result<PresenceMatrixPayload, String> {
+) -> Result<OverlapPlotPayload, String> {
     let gd_entry_list = build_entity_list(annotation_map)?;
 
-    // Now we have one gene disease entry for each gene. This entry contains
+    // Now we have one gene disease entry for each gene or gene combination. This entry contains
     // HPOs for all of the gene-associated diseases that the user chose in the GUI
-    let payload = GeneDiseaseEntity::get_presence_matrix_payload(
+    let payload = GeneDiseaseEntity::get_overlap_matrix_payload(
         proband,
         &gd_entry_list,
         disease_counts,
@@ -42,7 +44,7 @@ pub fn calculate_presence_matrix(
 }
 
 /// Computes the total score (summed across all rows) for each entity/column.
-fn compute_entity_sums(payload: &PresenceMatrixPayload) -> HashMap<String, f64> {
+fn compute_entity_sums(payload: &OverlapPlotPayload) -> HashMap<String, f64> {
     payload.entities.iter()
         .map(|entity| {
             let sum: f64 = payload.columns.iter()
@@ -69,11 +71,11 @@ fn sort_entities_by_score(
 }
 
 /// Sort key + payload for a row with at least one full (score == 1.0) match.
-type FullMatchKey = (isize, Vec<usize>, usize, PresenceMatrixItem);
+type FullMatchKey = (isize, Vec<usize>, usize, OverlapPlotItem);
 /// Sort key + payload for a row with a best partial (0.0 < score < 1.0) match.
-type PartialMatchKey = (usize, f64, usize, PresenceMatrixItem);
+type PartialMatchKey = (usize, f64, usize, OverlapPlotItem);
 /// Sort key + payload for a row with no matches at all.
-type ZeroMatchKey = (usize, PresenceMatrixItem);
+type ZeroMatchKey = (usize, OverlapPlotItem);
 
 enum RowBucket {
     Full(FullMatchKey),
@@ -84,7 +86,7 @@ enum RowBucket {
 /// Classifies a single row into the full/partial/zero-match bucket, computing
 /// whatever sort key that bucket needs relative to the newly sorted entity order.
 fn classify_row(
-    item: PresenceMatrixItem,
+    item: OverlapPlotItem,
     sorted_entities: &[String],
     original_positions: &HashMap<String, usize>,
 ) -> RowBucket {
@@ -122,7 +124,7 @@ fn classify_row(
 
 /// Splits all rows into their three sort buckets.
 fn classify_rows(
-    columns: Vec<PresenceMatrixItem>,
+    columns: Vec<OverlapPlotItem>,
     sorted_entities: &[String],
     original_positions: &HashMap<String, usize>,
 ) -> (Vec<FullMatchKey>, Vec<PartialMatchKey>, Vec<ZeroMatchKey>) {
@@ -179,7 +181,7 @@ fn sort_zero_matches(mut keys: Vec<ZeroMatchKey>) -> Vec<ZeroMatchKey> {
 
 /// Sorts the columns (gene entities) and rows (PresenceMatrixItem) following the
 /// explicit hierarchical block rules established in the Python pipeline.
-pub fn sort_presence_payload(payload: PresenceMatrixPayload) -> PresenceMatrixPayload {
+pub fn sort_presence_payload(payload: OverlapPlotPayload) -> OverlapPlotPayload {
     if payload.entities.is_empty() || payload.columns.is_empty() {
         return payload;
     }
@@ -205,7 +207,7 @@ pub fn sort_presence_payload(payload: PresenceMatrixPayload) -> PresenceMatrixPa
     sorted_columns.extend(partial_keys.into_iter().map(|k| k.3));
     sorted_columns.extend(zero_keys.into_iter().map(|k| k.1));
 
-    PresenceMatrixPayload {
+    OverlapPlotPayload {
         entities: sorted_entities,
         columns: sorted_columns,
     }
@@ -222,8 +224,8 @@ mod tests {
     // Fixtures
     // -----------------------------------------------------------------
 
-    fn item(hpo_id: &str, name: &str, scores: &[(&str, f64)]) -> PresenceMatrixItem {
-        PresenceMatrixItem {
+    fn item(hpo_id: &str, name: &str, scores: &[(&str, f64)]) -> OverlapPlotItem {
+        OverlapPlotItem {
             hpo_id: hpo_id.to_string(),
             hpo_name: name.to_string(),
             scores: scores.iter().map(|(k, v)| (k.to_string(), *v)).collect(),
@@ -241,7 +243,7 @@ mod tests {
 
     #[rstest]
     fn entity_sums_add_scores_across_all_rows(three_entities: Vec<String>) {
-        let payload = PresenceMatrixPayload {
+        let payload = OverlapPlotPayload {
             entities: three_entities,
             columns: vec![
                 item("HP:0001", "Term 1", &[("GENE_A", 1.0), ("GENE_B", 0.5)]),
@@ -257,7 +259,7 @@ mod tests {
 
     #[rstest]
     fn entity_sums_missing_score_defaults_to_zero() {
-        let payload = PresenceMatrixPayload {
+        let payload = OverlapPlotPayload {
             entities: vec!["GENE_A".to_string()],
             columns: vec![item("HP:0001", "Term 1", &[])], // no scores recorded at all
         };

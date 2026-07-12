@@ -84,8 +84,14 @@ export class ConfigService {
     return invoke<null>('add_observed_hpos_from_ner', {observed});
   }
 
-  async downloadSummary(dataType: string): Promise<null> {
-    return invoke<null>('download_summary', {dataType});
+  async downloadExcelSummary(
+    dataType: string,
+    annotations: Record<string, GeneDiseaseAssociation[]>,
+  ): Promise<void> {
+    await invoke<void>('download_excel_summary', {
+      dataType,
+      annotations,
+    });
   }
   
 }

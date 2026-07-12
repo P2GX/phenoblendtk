@@ -1,12 +1,11 @@
 pub mod phenoblend;
 
+mod excel;
 mod hpoa;
 mod hpo;
 mod model;
 mod blend;
 mod util;
-use ga4ghphetools::dto::etl_dto::SexCode::O;
-use ontolius::TermId;
 use serde::{self,Serialize};
 
 use fenominal::OntologyMatch;
@@ -14,6 +13,7 @@ use fenominal::FenominalSentence;
 use ga4ghphetools::dto::hpo_term_dto::HpoTermDuplet;
 use ga4ghphetools::tauri::models::HierarchyMapItem;
 use ontolius::ontology::OntologyTerms;
+use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 use tauri::{AppHandle, Emitter, WindowEvent};
 use std::collections::HashMap;
@@ -23,9 +23,11 @@ use phenopackets::schema::v2::Phenopacket;
 
 use crate::blend::dto::UpsetPlotPayload;
 use crate::blend::dto::SpreadPlotPayload;
-use crate::{blend::dto::PresenceMatrixPayload, phenoblend::PhenoblendSingleton};
+use crate::{blend::dto::OverlapPlotPayload, phenoblend::PhenoblendSingleton};
 use crate::model::status::InitializationStatusDto;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
+use tauri_plugin_log::{Target, TargetKind};
+use log::{trace, debug, info, warn, error};
 
 
 struct AppState {
@@ -37,6 +39,7 @@ pub fn run() {
     let app_state = Arc::new(AppState {
         phenoblendtk: Mutex::new(PhenoblendSingleton::new()),
     });
+    let log_level = log::LevelFilter::Trace;
 
     tauri::Builder::default()
         .manage(app_state)
@@ -44,10 +47,24 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())     
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log_level)
+                .level_for("tao", log::LevelFilter::Warn)
+                .level_for("winit", log::LevelFilter::Warn)
+                .level_for("tauri", log::LevelFilter::Warn)
+                .targets([
+                    Target::new(TargetKind::Stdout),
+                    Target::new(TargetKind::LogDir { file_name: Some("phenoblendtk.log".to_string()) }), 
+                    Target::new(TargetKind::Webview), // forwards logs to the browser devtools console
+                ])
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             add_observed_hpos_from_ner,
             autocomplete_gene_symbol,
             check_initialization_status,
+            download_excel_summary,
             export_svg_to_pdf,
             get_hpo_autocomplete,
             get_hpo_modifiers,
@@ -207,10 +224,11 @@ async fn load_gene_disease_associations(
 fn get_overlap_plot(
     state: tauri::State<'_, Arc<AppState>>,
     annotations: HashMap<String, Vec<GeneDiseaseAssociation>>
-) -> Result<PresenceMatrixPayload, String> {
+) -> Result<OverlapPlotPayload, String> {
     let state_handle = state.inner().clone();
     let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
-    singleton.calculate_presence_matrix(annotations)
+    trace!("get_overlap_plot called");
+    singleton.calculate_overlap_matrix(annotations)
 }
 
 #[tauri::command]
@@ -432,15 +450,27 @@ async fn export_svg_to_pdf(
 
 
 #[tauri::command]
-async fn download_summary(
+async fn download_excel_summary(
     app: tauri::AppHandle,
     state: tauri::State<'_, Arc<AppState>>,
-    data_type: String) -> Result<(), String>
+    data_type: String,
+    annotations: HashMap<String, Vec<GeneDiseaseAssociation>>) -> Result<(), String>
 {
-    let singleton = state.phenoblendtk.lock()
+    let mut singleton = state.phenoblendtk.lock()
         .map_err(|_| "Failed to lock state".to_string())?;
+    let file_path = app
+        .dialog()
+        .file()
+        .add_filter("Excel Workbook", &["xlsx"])
+        .set_file_name("hpo_annotations.xlsx")
+        .blocking_save_file();
 
+    let Some(path) = file_path else {
+        return Err("Export cancelled".to_string());
+    };
 
+    let path_str = path.to_string();
+    singleton.output_excel(data_type, annotations, path_str)?;
 
     Ok(())
 
