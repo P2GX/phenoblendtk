@@ -429,3 +429,20 @@ async fn export_svg_to_pdf(
         None => Ok(false), // user cancelled — not an error
     }
 }
+
+
+#[tauri::command]
+async fn download_summary(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, Arc<AppState>>,
+    data_type: String) -> Result<(), String>
+{
+    let singleton = state.phenoblendtk.lock()
+        .map_err(|_| "Failed to lock state".to_string())?;
+
+
+
+    Ok(())
+
+}
+

@@ -83,5 +83,9 @@ export class ConfigService {
   async addObservedHposFromNER(observed: string[]): Promise<null> {
     return invoke<null>('add_observed_hpos_from_ner', {observed});
   }
+
+  async downloadSummary(dataType: string): Promise<null> {
+    return invoke<null>('download_summary', {dataType});
+  }
   
 }

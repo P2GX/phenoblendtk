@@ -19,6 +19,7 @@ type ExportFormat = 'svg' |  'pdf';
    styleUrls: ['./visualize.component.scss']
 })
 export class PhenotypeProfileVisualizerComponent implements OnInit {
+
   @ViewChild('overlapComponent') private childMatrix!: OverlapPlotComponent;
   @ViewChild('upsetComponent') private childUpset!: UpsetPlotComponent;
   @ViewChild('spreadComponent') private childSpread!: SpreadPlotComponent;
@@ -129,6 +130,10 @@ private getChartContainerElement(view: VisualizationType): HTMLElement | null {
     case 'upset': return this.childUpset?.chartContainerRef?.nativeElement ?? null;
     case 'spread': return this.childSpread?.chartContainerRef?.nativeElement ?? null;
   }
+}
+
+downloadSummary() {
+  const dataType: VisualizationType = this.activeView();
 }
 
 
