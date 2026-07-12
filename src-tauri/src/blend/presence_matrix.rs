@@ -1,241 +1,150 @@
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::sync::Arc;
 
-use ontolius::ontology::HierarchyQueries;
-use ontolius::ontology::HierarchyWalks;
 use ontolius::{TermId, ontology::csr::FullCsrOntology};
 
 use crate::blend::disease_gene_entity::GeneDiseaseEntity;
 use crate::blend::dto::PresenceMatrixItem;
 use crate::blend::dto::PresenceMatrixPayload;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
-use crate::hpoa::disease_model::SimpleDiseaseModel;
 use crate::model::proband::Proband;
 
-/* 
-struct Entity {
-    label: String,
-    explicit_annotation_ids: HashSet<TermId>,
-    disease_hpo_ids: HashSet<TermId> 
+/// Converts raw gene->GDA mappings into clean entities (order not significant here).
+fn build_entity_list(
+    annotation_map: &HashMap<String, Vec<GeneDiseaseAssociation>>,
+) -> Result<Vec<GeneDiseaseEntity>, String> {
+    let mut gd_entry_list = Vec::new();
+    for gda_list in annotation_map.values() {
+        let gd_entity = GeneDiseaseEntity::new(gda_list)?;
+        gd_entry_list.push(gd_entity);
+    }
+    Ok(gd_entry_list)
 }
-
-impl Entity {
-    pub fn new(label: impl Into<String>) -> Self {
-        Self {
-            label: label.into(),
-            explicit_annotation_ids: HashSet::default(),
-            // HPO terms of disease plus descendents
-            disease_hpo_ids: HashSet::default()
-        }
-    }
-
-    pub fn add_hpo_id(&mut self, tid: &TermId, hpo:Arc<FullCsrOntology>) {
-        self.disease_hpo_ids.insert(tid.clone());
-        self.explicit_annotation_ids.insert(tid.clone());
-        for desc_id in hpo.iter_descendant_ids(tid) {
-             self.disease_hpo_ids.insert(desc_id.clone());
-        }
-    }
-
-    pub fn get_matrix(&self, hpo: Arc<FullCsrOntology>, observed_hpos: Vec<TermId>) -> Vec<PresenceMatrixItem> {
-        let mut term_to_item_d: HashMap<TermId, PresenceMatrixItem> = HashMap::new();
-        for hpo_id in observed_hpos {
-            if self.disease_hpo_ids.contains(&hpo_id) {
-                let pm_item = term_to_item_d
-                    .entry(hpo_id.clone())
-                    .or_insert_with(|| PresenceMatrixItem::new(&hpo_id, hpo.clone()));
-                pm_item.add_perfect_match(&self.label);
-            }
-        }
-
-        vec![]
-    }
-
-    pub fn is_perfect_match(&self, tid: &TermId) -> bool {
-        self.disease_hpo_ids.contains(tid)
-    }
-
-    ///If the gene is annotated with an ancestor (a broader parent term) rather than the precise term. 
-    /// It quantifies the specificity using a ratio of disease annotations:
-    pub fn get_partial_match_score(
-        &self, 
-        query_hpo:&TermId, 
-        hpo: Arc<FullCsrOntology>,
-        disease_counts: &HashMap<TermId, usize>) -> f64 {
-            let pheno_hpo_count = *disease_counts.get(query_hpo).unwrap_or(&0);
-
-            if pheno_hpo_count > 0 {
-                // Find the maximum disease count among the more specific descendant terms
-                let mut max_geno_hpo_count = 0;
-                for hpo_id in &self.explicit_annotation_ids {
-                    if hpo.is_ancestor_of(hpo_id, query_hpo) {
-                        let anc_count = *disease_counts.get(hpo_id).unwrap_or(&0);
-                        if anc_count > max_geno_hpo_count {
-                            max_geno_hpo_count = anc_count;
-                        }
-                    }
-                }
-                let score = (max_geno_hpo_count / pheno_hpo_count) as f64;
-                score
-            } else {
-                0.0
-            }
-    }
-
-
-}
-
-fn get_gene_entity(
-    symbol: &str, 
-    hpo: Arc<FullCsrOntology>,
-    omim_disease_models: &HashMap<TermId, SimpleDiseaseModel>,
-    gene_to_disease_d: &HashMap<String, Vec<GeneDiseaseAssociation>>)
-    -> Result<Entity, String> {
-        let mut entity = Entity::new(symbol);
-        let gda_list = gene_to_disease_d.get(symbol)
-            .ok_or_else(|| format!("Could not find disease list for {}", symbol))?;
-        for gda in gda_list {
-            let disease_id = gda.disease_id.clone();
-            let sdm = omim_disease_models.get(&disease_id)
-                .ok_or_else(|| format!("Could not find disease for id {}", disease_id))?;
-            // These are exact matches between the disease and the ppkt (the disease has the same HPO term or an ancestor)
-            for hpo_id in sdm.observed_hpo_ids.iter() {
-                entity.add_hpo_id(hpo_id, hpo.clone());
-            }
-        }
-        Ok(entity)
-    }
-
-
-fn calculate_for_genes(proband: Proband, hpo: Arc<FullCsrOntology>,
-    omim_disease_models: &HashMap<TermId, SimpleDiseaseModel>,
-    gene_to_disease_d: &HashMap<String, Vec<GeneDiseaseAssociation>>) -> Result<Vec<PresenceMatrixPayload>, String> {
-        let symbols = proband.gene_list.clone();
-        let mut entities: Vec<Entity> = Vec::new();
-        for gene in symbols {
-            let ent = get_gene_entity(&gene, hpo.clone(), omim_disease_models, gene_to_disease_d)?;
-            entities.push(ent);
-        }
-        let observed_hpos = proband.observed_hpos.clone();
-
-        Ok(vec![])
-    }
-
-*/
 
 pub fn calculate_presence_matrix(
     hpo: Arc<FullCsrOntology>,
     annotation_map: &HashMap<String, Vec<GeneDiseaseAssociation>>,
     disease_counts: &HashMap<TermId, usize>,
-    proband: Proband
+    proband: Proband,
 ) -> Result<PresenceMatrixPayload, String> {
+    let gd_entry_list = build_entity_list(annotation_map)?;
 
-    let mut gd_entry_list: Vec<GeneDiseaseEntity> = Vec::new();
-    for (symbol, gda_list) in annotation_map.into_iter() {
-        let gd_entity =   GeneDiseaseEntity::new(gda_list)?;
-        gd_entry_list.push(gd_entity);
-    }
     // Now we have one gene disease entry for each gene. This entry contains
     // HPOs for all of the gene-associated diseases that the user chose in the GUI
-    let payload: PresenceMatrixPayload = GeneDiseaseEntity::get_presence_matrix_payload(
+    let payload = GeneDiseaseEntity::get_presence_matrix_payload(
         proband,
         &gd_entry_list,
         disease_counts,
-        hpo.clone()
+        hpo.clone(),
     );
 
     Ok(payload)
 }
 
+/// Computes the total score (summed across all rows) for each entity/column.
+fn compute_entity_sums(payload: &PresenceMatrixPayload) -> HashMap<String, f64> {
+    payload.entities.iter()
+        .map(|entity| {
+            let sum: f64 = payload.columns.iter()
+                .map(|item| item.scores.get(entity).copied().unwrap_or(0.0))
+                .sum();
+            (entity.clone(), sum)
+        })
+        .collect()
+}
 
-
-/// Sorts the columns (gene entities) and rows (PresenceMatrixItem) following the explicit 
-/// hierarchal block rules established in the Python pipeline.
-pub fn sort_presence_payload(payload: PresenceMatrixPayload) -> PresenceMatrixPayload {
-    if payload.entities.is_empty() || payload.columns.is_empty() {
-        return payload;
-    }
-    let n_columns = payload.n_columns();
-
-    // --- 1. Sort Entities (Columns) ---
-    // Calculate column sums for each entity
-    let mut entity_sums: HashMap<String, f64> = HashMap::new();
-    for entity in &payload.entities {
-        let sum: f64 = payload.columns.iter()
-            .map(|item| item.scores.get(entity).copied().unwrap_or(0.0))
-            .sum();
-        entity_sums.insert(entity.clone(), sum);
-    }
-
-    // Sort entities descending by sum. 
-    // Ties fall back to their original position to preserve caller stability.
-    let mut sorted_entities = payload.entities.clone();
-    sorted_entities.sort_by(|a, b| {
+/// Sorts entities (columns) descending by total score. Ties preserve original
+/// input order for caller stability.
+fn sort_entities_by_score(
+    entities: &[String],
+    entity_sums: &HashMap<String, f64>,
+) -> Vec<String> {
+    let mut sorted = entities.to_vec();
+    sorted.sort_by(|a, b| {
         let sum_a = entity_sums.get(a).unwrap_or(&0.0);
         let sum_b = entity_sums.get(b).unwrap_or(&0.0);
-        
-        // Descending sort: compare b to a
-        sum_b.total_cmp(sum_a)
+        sum_b.total_cmp(sum_a) // descending
     });
+    sorted
+}
 
-    // --- 2. Sort Rows (PresenceMatrixItem) ---
-    // Track original index positions for stable tie-breaking
-    let original_positions: HashMap<String, usize> = payload.columns.iter()
+/// Sort key + payload for a row with at least one full (score == 1.0) match.
+type FullMatchKey = (isize, Vec<usize>, usize, PresenceMatrixItem);
+/// Sort key + payload for a row with a best partial (0.0 < score < 1.0) match.
+type PartialMatchKey = (usize, f64, usize, PresenceMatrixItem);
+/// Sort key + payload for a row with no matches at all.
+type ZeroMatchKey = (usize, PresenceMatrixItem);
+
+enum RowBucket {
+    Full(FullMatchKey),
+    Partial(PartialMatchKey),
+    Zero(ZeroMatchKey),
+}
+
+/// Classifies a single row into the full/partial/zero-match bucket, computing
+/// whatever sort key that bucket needs relative to the newly sorted entity order.
+fn classify_row(
+    item: PresenceMatrixItem,
+    sorted_entities: &[String],
+    original_positions: &HashMap<String, usize>,
+) -> RowBucket {
+    let input_idx = *original_positions.get(&item.hpo_id).unwrap_or(&0);
+
+    let full_positions: Vec<usize> = sorted_entities.iter()
         .enumerate()
-        .map(|(i, item)| (item.hpo_id.clone(), i))
+        .filter(|(_, entity)| {
+            let score = item.scores.get(*entity).copied().unwrap_or(0.0);
+            (score - 1.0).abs() < f64::EPSILON
+        })
+        .map(|(i, _)| i)
         .collect();
 
-    // Group rows into three categories: full, partial, and zero matches
-    let mut full_keys: Vec<(isize, Vec<usize>, usize, PresenceMatrixItem)> = Vec::new();
-    let mut partial_keys: Vec<(usize, f64, usize, PresenceMatrixItem)> = Vec::new(); // Note: we'll negate the score during total_cmp
-    let mut zero_keys: Vec<(usize, PresenceMatrixItem)> = Vec::new();
+    if !full_positions.is_empty() {
+        let count_key = -(full_positions.len() as isize);
+        return RowBucket::Full((count_key, full_positions, input_idx, item));
+    }
 
-    for item in payload.columns {
-        let input_idx = *original_positions.get(&item.hpo_id).unwrap_or(&0);
-
-        // Find positions of full matches (score == 1.0) in the new sorted entity order
-        let full_positions: Vec<usize> = sorted_entities.iter()
-            .enumerate()
-            .filter(|(_, entity)| {
-                let score = item.scores.get(*entity).copied().unwrap_or(0.0);
-                (score - 1.0).abs() < f64::EPSILON // Check if exactly 1.0
-            })
-            .map(|(i, _)| i)
-            .collect();
-
-        if !full_positions.is_empty() {
-            // Key: (-count of full matches, positions vector, original position)
-            let count_key = -(full_positions.len() as isize);
-            full_keys.push((count_key, full_positions, input_idx, item));
-            continue;
-        }
-
-        // Check for partial matches or all zeros
-        let mut best_score = 0.0;
-        let mut primary_pos = None;
-
-        for (i, entity) in sorted_entities.iter().enumerate() {
-            let score = item.scores.get(entity).copied().unwrap_or(0.0);
-            if score > best_score {
-                best_score = score;
-                primary_pos = Some(i);
-            }
-        }
-
-        if let Some(pos) = primary_pos {
-            // Key: (leftmost primary position, best score, original position)
-            partial_keys.push((pos, best_score, input_idx, item));
-        } else {
-            // Key: (original position)
-            zero_keys.push((input_idx, item));
+    let mut best_score = 0.0;
+    let mut primary_pos = None;
+    for (i, entity) in sorted_entities.iter().enumerate() {
+        let score = item.scores.get(entity).copied().unwrap_or(0.0);
+        if score > best_score {
+            best_score = score;
+            primary_pos = Some(i);
         }
     }
 
-    // --- 3. Sorting the buckets ---
+    match primary_pos {
+        Some(pos) => RowBucket::Partial((pos, best_score, input_idx, item)),
+        None => RowBucket::Zero((input_idx, item)),
+    }
+}
 
-    // Full match sorting: by negative length (descending size), then by lexicographical vectors, then stable pos
-    full_keys.sort_by(|a, b| {
+/// Splits all rows into their three sort buckets.
+fn classify_rows(
+    columns: Vec<PresenceMatrixItem>,
+    sorted_entities: &[String],
+    original_positions: &HashMap<String, usize>,
+) -> (Vec<FullMatchKey>, Vec<PartialMatchKey>, Vec<ZeroMatchKey>) {
+    let mut full_keys = Vec::new();
+    let mut partial_keys = Vec::new();
+    let mut zero_keys = Vec::new();
+
+    for item in columns {
+        match classify_row(item, sorted_entities, original_positions) {
+            RowBucket::Full(k) => full_keys.push(k),
+            RowBucket::Partial(k) => partial_keys.push(k),
+            RowBucket::Zero(k) => zero_keys.push(k),
+        }
+    }
+
+    (full_keys, partial_keys, zero_keys)
+}
+
+/// Sorts full-match rows: by descending match count, then lexicographic
+/// match-position vector, then stable original position.
+fn sort_full_matches(mut keys: Vec<FullMatchKey>) -> Vec<FullMatchKey> {
+    keys.sort_by(|a, b| {
         match a.0.cmp(&b.0) {
             std::cmp::Ordering::Equal => match a.1.cmp(&b.1) {
                 std::cmp::Ordering::Equal => a.2.cmp(&b.2),
@@ -244,24 +153,54 @@ pub fn sort_presence_payload(payload: PresenceMatrixPayload) -> PresenceMatrixPa
             other => other,
         }
     });
+    keys
+}
 
-    // Partial match sorting: primary pos ascending, best score descending, then stable pos
-    partial_keys.sort_by(|a, b| {
+/// Sorts partial-match rows: by ascending leftmost primary position, then
+/// descending best score, then stable original position.
+fn sort_partial_matches(mut keys: Vec<PartialMatchKey>) -> Vec<PartialMatchKey> {
+    keys.sort_by(|a, b| {
         match a.0.cmp(&b.0) {
-            std::cmp::Ordering::Equal => match b.1.total_cmp(&a.1) { // Descending sort on float score
+            std::cmp::Ordering::Equal => match b.1.total_cmp(&a.1) {
                 std::cmp::Ordering::Equal => a.2.cmp(&b.2),
                 other => other,
             },
             other => other,
         }
     });
+    keys
+}
 
-    // Zero match sorting: stable position order
-    zero_keys.sort_by_key(|k| k.0);
+/// Sorts zero-match rows: stable original position order.
+fn sort_zero_matches(mut keys: Vec<ZeroMatchKey>) -> Vec<ZeroMatchKey> {
+    keys.sort_by_key(|k| k.0);
+    keys
+}
 
-    // --- 4. Reassemble output ---
+/// Sorts the columns (gene entities) and rows (PresenceMatrixItem) following the
+/// explicit hierarchical block rules established in the Python pipeline.
+pub fn sort_presence_payload(payload: PresenceMatrixPayload) -> PresenceMatrixPayload {
+    if payload.entities.is_empty() || payload.columns.is_empty() {
+        return payload;
+    }
+    let n_columns = payload.n_columns();
+
+    let entity_sums = compute_entity_sums(&payload);
+    let sorted_entities = sort_entities_by_score(&payload.entities, &entity_sums);
+
+    let original_positions: HashMap<String, usize> = payload.columns.iter()
+        .enumerate()
+        .map(|(i, item)| (item.hpo_id.clone(), i))
+        .collect();
+
+    let (full_keys, partial_keys, zero_keys) =
+        classify_rows(payload.columns, &sorted_entities, &original_positions);
+
+    let full_keys = sort_full_matches(full_keys);
+    let partial_keys = sort_partial_matches(partial_keys);
+    let zero_keys = sort_zero_matches(zero_keys);
+
     let mut sorted_columns = Vec::with_capacity(n_columns);
-    
     sorted_columns.extend(full_keys.into_iter().map(|k| k.3));
     sorted_columns.extend(partial_keys.into_iter().map(|k| k.3));
     sorted_columns.extend(zero_keys.into_iter().map(|k| k.1));
@@ -269,5 +208,255 @@ pub fn sort_presence_payload(payload: PresenceMatrixPayload) -> PresenceMatrixPa
     PresenceMatrixPayload {
         entities: sorted_entities,
         columns: sorted_columns,
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rstest::{fixture, rstest};
+    use std::collections::HashMap;
+
+    // -----------------------------------------------------------------
+    // Fixtures
+    // -----------------------------------------------------------------
+
+    fn item(hpo_id: &str, name: &str, scores: &[(&str, f64)]) -> PresenceMatrixItem {
+        PresenceMatrixItem {
+            hpo_id: hpo_id.to_string(),
+            hpo_name: name.to_string(),
+            scores: scores.iter().map(|(k, v)| (k.to_string(), *v)).collect(),
+        }
+    }
+
+    #[fixture]
+    fn three_entities() -> Vec<String> {
+        vec!["GENE_A".to_string(), "GENE_B".to_string(), "GENE_C".to_string()]
+    }
+
+    // -----------------------------------------------------------------
+    // compute_entity_sums
+    // -----------------------------------------------------------------
+
+    #[rstest]
+    fn entity_sums_add_scores_across_all_rows(three_entities: Vec<String>) {
+        let payload = PresenceMatrixPayload {
+            entities: three_entities,
+            columns: vec![
+                item("HP:0001", "Term 1", &[("GENE_A", 1.0), ("GENE_B", 0.5)]),
+                item("HP:0002", "Term 2", &[("GENE_A", 0.0), ("GENE_B", 0.5)]),
+            ],
+        };
+
+        let sums = compute_entity_sums(&payload);
+        assert_eq!(sums.get("GENE_A"), Some(&1.0));
+        assert_eq!(sums.get("GENE_B"), Some(&1.0));
+        assert_eq!(sums.get("GENE_C"), Some(&0.0)); // no rows reference it at all
+    }
+
+    #[rstest]
+    fn entity_sums_missing_score_defaults_to_zero() {
+        let payload = PresenceMatrixPayload {
+            entities: vec!["GENE_A".to_string()],
+            columns: vec![item("HP:0001", "Term 1", &[])], // no scores recorded at all
+        };
+        let sums = compute_entity_sums(&payload);
+        assert_eq!(sums.get("GENE_A"), Some(&0.0));
+    }
+
+    // -----------------------------------------------------------------
+    // sort_entities_by_score
+    // -----------------------------------------------------------------
+
+    #[rstest]
+    fn entities_sort_descending_by_score(three_entities: Vec<String>) {
+        let sums: HashMap<String, f64> = [
+            ("GENE_A".to_string(), 0.4),
+            ("GENE_B".to_string(), 0.9),
+            ("GENE_C".to_string(), 0.1),
+        ].into_iter().collect();
+
+        let sorted = sort_entities_by_score(&three_entities, &sums);
+        assert_eq!(sorted, vec!["GENE_B", "GENE_A", "GENE_C"]);
+    }
+
+    #[rstest]
+    fn tied_scores_preserve_original_order(three_entities: Vec<String>) {
+        let sums: HashMap<String, f64> = [
+            ("GENE_A".to_string(), 0.5),
+            ("GENE_B".to_string(), 0.5),
+            ("GENE_C".to_string(), 0.5),
+        ].into_iter().collect();
+
+        let sorted = sort_entities_by_score(&three_entities, &sums);
+        // All tied: stable sort should preserve input order exactly.
+        assert_eq!(sorted, vec!["GENE_A", "GENE_B", "GENE_C"]);
+    }
+
+    #[rstest]
+    fn entity_missing_from_sums_defaults_to_zero(three_entities: Vec<String>) {
+        let sums: HashMap<String, f64> = [
+            ("GENE_A".to_string(), 0.9),
+            // GENE_B, GENE_C intentionally absent
+        ].into_iter().collect();
+
+        let sorted = sort_entities_by_score(&three_entities, &sums);
+        assert_eq!(sorted[0], "GENE_A");
+    }
+
+    // -----------------------------------------------------------------
+    // classify_row
+    // -----------------------------------------------------------------
+
+    #[rstest]
+    fn row_with_one_full_match_classifies_as_full(three_entities: Vec<String>) {
+        let original_positions: HashMap<String, usize> =
+            [("HP:0001".to_string(), 0)].into_iter().collect();
+
+        let row = item("HP:0001", "Term 1",  &[("GENE_A", 1.0), ("GENE_B", 0.3)]);
+        match classify_row(row, &three_entities, &original_positions) {
+            RowBucket::Full((count_key, positions, idx, _)) => {
+                assert_eq!(count_key, -1); // one full match => count_key = -1
+                assert_eq!(positions, vec![0]); // GENE_A is at sorted-index 0
+                assert_eq!(idx, 0);
+            }
+            _ => panic!("expected Full bucket"),
+        }
+    }
+
+    #[rstest]
+    fn row_with_two_full_matches_records_both_positions(three_entities: Vec<String>) {
+        let original_positions: HashMap<String, usize> =
+            [("HP:0001".to_string(), 2)].into_iter().collect();
+
+        let row = item("HP:0001", "Term 1", &[("GENE_A", 1.0), ("GENE_C", 1.0), ("GENE_B", 0.0)]);
+        match classify_row(row, &three_entities, &original_positions) {
+            RowBucket::Full((count_key, positions, idx, _)) => {
+                assert_eq!(count_key, -2);
+                assert_eq!(positions, vec![0, 2]); // GENE_A=0, GENE_C=2 in sorted_entities order
+                assert_eq!(idx, 2);
+            }
+            _ => panic!("expected Full bucket"),
+        }
+    }
+
+    #[rstest]
+    fn row_with_no_full_match_but_partial_classifies_as_partial(three_entities: Vec<String>) {
+        let original_positions: HashMap<String, usize> =
+            [("HP:0001".to_string(), 1)].into_iter().collect();
+
+        let row = item("HP:0001", "Term 1", &[("GENE_A", 0.4), ("GENE_B", 0.7), ("GENE_C", 0.2)]);
+        match classify_row(row, &three_entities, &original_positions) {
+            RowBucket::Partial((pos, best_score, idx, _)) => {
+                assert_eq!(pos, 1); // GENE_B is the best score, at sorted-index 1
+                assert_eq!(best_score, 0.7);
+                assert_eq!(idx, 1);
+            }
+            _ => panic!("expected Partial bucket"),
+        }
+    }
+
+    #[rstest]
+    fn row_with_all_zero_scores_classifies_as_zero(three_entities: Vec<String>) {
+        let original_positions: HashMap<String, usize> =
+            [("HP:0001".to_string(), 3)].into_iter().collect();
+
+        let row = item("HP:0001", "Term 1", &[("GENE_A", 0.0), ("GENE_B", 0.0), ("GENE_C", 0.0)]);
+        match classify_row(row, &three_entities, &original_positions) {
+            RowBucket::Zero((idx, _)) => assert_eq!(idx, 3),
+            _ => panic!("expected Zero bucket"),
+        }
+    }
+
+    #[rstest]
+    fn row_missing_from_original_positions_defaults_to_zero_index(three_entities: Vec<String>) {
+        let original_positions: HashMap<String, usize> = HashMap::new(); // empty
+        let row = item("HP:9999", "Term 999", &[("GENE_A", 1.0)]);
+        match classify_row(row, &three_entities, &original_positions) {
+            RowBucket::Full((_, _, idx, _)) => assert_eq!(idx, 0),
+            _ => panic!("expected Full bucket"),
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // sort_full_matches
+    // -----------------------------------------------------------------
+
+    #[rstest]
+    fn full_matches_sort_by_descending_match_count() {
+        let keys = vec![
+            (-1isize, vec![0usize], 0usize, item("HP:0001", "Term 1", &[])),
+            (-2isize, vec![0usize, 1usize], 1usize, item("HP:0002", "Term 2", &[])),
+        ];
+        let sorted = sort_full_matches(keys);
+        assert_eq!(sorted[0].3.hpo_id, "HP:0002"); // 2 matches sorts before 1 match
+        assert_eq!(sorted[1].3.hpo_id, "HP:0001");
+    }
+
+    #[rstest]
+    fn full_matches_tie_break_by_position_vector_then_original_index() {
+        let keys = vec![
+            (-1isize, vec![1usize], 0usize, item("HP:0001", "Term 1", &[])), // match at position 1
+            (-1isize, vec![0usize], 1usize, item("HP:0002", "Term 2", &[])), // match at position 0
+        ];
+        let sorted = sort_full_matches(keys);
+        // Same count (-1), so compares position vectors: [0] < [1]
+        assert_eq!(sorted[0].3.hpo_id, "HP:0002");
+        assert_eq!(sorted[1].3.hpo_id, "HP:0001");
+    }
+
+    // -----------------------------------------------------------------
+    // sort_partial_matches
+    // -----------------------------------------------------------------
+
+    #[rstest]
+    fn partial_matches_sort_by_ascending_primary_position() {
+        let keys = vec![
+            (2usize, 0.5f64, 0usize, item("HP:0001", "Term 1", &[])),
+            (0usize, 0.3f64, 1usize, item("HP:0002", "Term 2", &[])),
+        ];
+        let sorted = sort_partial_matches(keys);
+        assert_eq!(sorted[0].3.hpo_id, "HP:0002"); // position 0 comes first
+        assert_eq!(sorted[1].3.hpo_id, "HP:0001");
+    }
+
+    #[rstest]
+    fn partial_matches_tie_break_by_descending_score() {
+        let keys = vec![
+            (0usize, 0.3f64, 0usize, item("HP:0001", "Term 1", &[])),
+            (0usize, 0.9f64, 1usize, item("HP:0002", "Term 2", &[])),
+        ];
+        let sorted = sort_partial_matches(keys);
+        // Same position (0), so higher score (0.9) sorts first
+        assert_eq!(sorted[0].3.hpo_id, "HP:0002");
+        assert_eq!(sorted[1].3.hpo_id, "HP:0001");
+    }
+
+    #[rstest]
+    fn partial_matches_final_tiebreak_by_original_index() {
+        let keys = vec![
+            (0usize, 0.5f64, 5usize, item("HP:0001", "Term 1", &[])),
+            (0usize, 0.5f64, 2usize, item("HP:0002", "Term 2", &[])),
+        ];
+        let sorted = sort_partial_matches(keys);
+        // Same position and score: lower original index (2) sorts first
+        assert_eq!(sorted[0].3.hpo_id, "HP:0002");
+        assert_eq!(sorted[1].3.hpo_id, "HP:0001");
+    }
+
+    // -----------------------------------------------------------------
+    // sort_zero_matches
+    // -----------------------------------------------------------------
+
+    #[rstest]
+    fn zero_matches_sort_by_original_index() {
+        let keys = vec![
+            (3usize, item("HP:0001", "Term 1", &[])),
+            (1usize, item("HP:0002", "Term 2", &[])),
+        ];
+        let sorted = sort_zero_matches(keys);
+        assert_eq!(sorted[0].1.hpo_id, "HP:0002");
+        assert_eq!(sorted[1].1.hpo_id, "HP:0001");
     }
 }

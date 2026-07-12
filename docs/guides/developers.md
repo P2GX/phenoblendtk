@@ -47,6 +47,16 @@ npx nx run ngx-phenoprofile:storybook
 ```
 
 
+## prettier
+
+To clean up the formatting of a file:
+
+```bash
+npx prettier --write projects/ngx-phenoprofile/src/lib/upset/upset-plot.component.ts
+ ```
+
+
+
 ## release
 
 

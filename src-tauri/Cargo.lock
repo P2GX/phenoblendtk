@@ -1748,8 +1748,8 @@ dependencies = [
 
 [[package]]
 name = "ga4ghphetools"
-version = "0.6.18"
-source = "git+https://github.com/P2GX/ga4ghphetools.git?tag=0.6.18#615ca2f5b37536d7d889b80c62d9b1244a60761c"
+version = "0.6.19"
+source = "git+https://github.com/P2GX/ga4ghphetools.git?tag=0.6.19#e5509f4679d1ae5fe69e6199253686cacebb02ef"
 dependencies = [
  "calamine",
  "chrono",
@@ -3665,7 +3665,7 @@ dependencies = [
 
 [[package]]
 name = "phenoblendtk"
-version = "0.3.11"
+version = "0.3.13"
 dependencies = [
  "csv",
  "dirs",
@@ -4436,9 +4436,6 @@ dependencies = [
  "ashpd",
  "block2",
  "dispatch2",
- "glib-sys",
- "gobject-sys",
- "gtk-sys",
  "js-sys",
  "log",
  "objc2",
