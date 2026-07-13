@@ -1,5 +1,6 @@
 pub mod phenoblend;
 
+mod enrichment;
 mod excel;
 mod hpoa;
 mod hpo;
@@ -23,6 +24,7 @@ use phenopackets::schema::v2::Phenopacket;
 
 use crate::blend::dto::UpsetPlotPayload;
 use crate::blend::dto::SpreadPlotPayload;
+use crate::enrichment::dto::DuoEnrichmentSummary;
 use crate::{blend::dto::OverlapPlotPayload, phenoblend::PhenoblendSingleton};
 use crate::model::status::InitializationStatusDto;
 use crate::hpoa::disease_model::GeneDiseaseAssociation;
@@ -62,6 +64,7 @@ pub fn run() {
         )
         .invoke_handler(tauri::generate_handler![
             add_observed_hpos_from_ner,
+            analyze_duo_enrichment,
             autocomplete_gene_symbol,
             check_initialization_status,
             download_excel_summary,
@@ -227,7 +230,6 @@ fn get_overlap_plot(
 ) -> Result<OverlapPlotPayload, String> {
     let state_handle = state.inner().clone();
     let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
-    trace!("get_overlap_plot called");
     singleton.calculate_overlap_matrix(annotations)
 }
 
@@ -476,3 +478,18 @@ async fn download_excel_summary(
 
 }
 
+
+
+
+const DEFAULT_N_SIM: usize = 100_000;
+
+#[tauri::command]
+fn analyze_duo_enrichment(
+    state: tauri::State<'_, Arc<AppState>>,
+    annotations: HashMap<String, Vec<GeneDiseaseAssociation>>,
+    n_sim: Option<usize>,
+) -> Result<Vec<DuoEnrichmentSummary>, String> {
+    let state_handle = state.inner().clone();
+    let singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
+    singleton.get_duo_enrichment_payload(annotations, n_sim.unwrap_or(DEFAULT_N_SIM))
+}

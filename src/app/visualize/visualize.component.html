@@ -20,6 +20,9 @@
           </button>
           <button class="btn btn-secondary" (click)="exportMatrix('svg')" [disabled]="isLoading() || !matrixData()">📤 SVG</button>
           <button class="btn btn-secondary" (click)="exportMatrix('pdf')" [disabled]="isLoading() || !matrixData()">📄 PDF</button>
+          <button class="btn btn-primary" (click)="runDuoEnrichment()" [disabled]="isLoading() || isEnrichmentLoading()">
+    🧬 {{ isEnrichmentLoading() ? 'Analyzing…' : 'Duo Enrichment Test' }}
+  </button>
         </div>
       </div>
 
@@ -60,4 +63,77 @@
           </button>
 
   </div>
+
+  @if (isEnrichmentLoading()) {
+  <div class="loading-state">
+    <p>Running duo enrichment test in Rust engine...</p>
+  </div>
+} @else if (enrichmentError(); as error) {
+  <div class="empty-state error-state">
+    <p>⚠ {{ error }}</p>
+  </div>
+} @else if (hasEnrichmentResults()) {
+  <div class="enrichment-panel">
+    <h3>Duo Enrichment Results</h3>
+    @for (result of enrichmentResults(); track result.geneA + result.geneB) {
+      <div class="enrichment-card">
+        <div class="enrichment-header">
+          <strong>{{ result.geneA }}</strong> / <strong>{{ result.geneB }}</strong>
+          @if (isDegenerate(result)) {
+            <span class="badge badge-warning" title="All urn terms were observed; null is deterministic">
+              degenerate
+            </span>
+          }
+        </div>
+
+        <div class="enrichment-stats">
+          <span>Shared terms: {{ result.nShared }} / {{ result.nUnion }}</span>
+          <br/>
+          <span>Observed duo terms: {{ result.nObsShared }}</span>
+        </div>
+
+        <div class="enrichment-methods">
+          @if (result.unweighted; as u) {
+            <div class="method-block">
+              <div class="method-label">Unweighted (exact)</div>
+              <div class="pmf-chart">
+                @for (h of pmfBarHeights(u); track $index) {
+                  <div
+                    class="pmf-bar"
+                    [class.pmf-bar-observed]="$index === result.nObsShared"
+                    [style.height.%]="h"
+                    [title]="'k=' + $index + ', P=' + u.pmf[$index].toFixed(4)"
+                  ></div>
+                }
+              </div>
+              <div class="p-value">p = {{ formatPValue(u.pValue) }}</div>
+            </div>
+          }
+
+          @if (result.frequency; as f) {
+            <div class="method-block">
+              <div class="method-label">Frequency-weighted (Monte Carlo)</div>
+              <div class="pmf-chart">
+                @for (h of pmfBarHeights(f); track $index) {
+                  <div
+                    class="pmf-bar"
+                    [class.pmf-bar-observed]="$index === result.nObsShared"
+                    [style.height.%]="h"
+                    [title]="'k=' + $index + ', P=' + f.pmf[$index].toFixed(4)"
+                  ></div>
+                }
+              </div>
+              <div class="p-value">p = {{ formatPValue(f.pValue) }}</div>
+            </div>
+          } @else {
+            <div class="method-block method-unavailable">
+              <div class="method-label">Frequency-weighted</div>
+              <p><em>No HPOA frequency data available for this gene pair</em></p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
     </div>

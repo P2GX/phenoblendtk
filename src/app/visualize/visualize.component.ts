@@ -9,7 +9,7 @@ import {
 import * as d3 from 'd3';
 import { ConfigService } from '../services/config-service';
 import { AnnotationService } from '../services/annotation-service';
-import { GeneDiseaseAssociation } from '../models/interfaces';
+import { DuoEnrichmentSummary, EnrichmentResult, GeneDiseaseAssociation } from '../models/interfaces';
 import { NotificationService } from 'ng-hpo-uikit';
 import {
   UpsetPlotComponent,
@@ -45,6 +45,13 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
   readonly spreadData = signal<SpreadPlotPayload | null>(null);
   readonly isLoading = signal<boolean>(false);
   readonly activeView = signal<VisualizationType>('overlap');
+
+   enrichmentResults = signal<DuoEnrichmentSummary[] | null>(null);
+  isEnrichmentLoading = signal(false);
+  enrichmentError = signal<string | null>(null);
+
+  hasEnrichmentResults = computed(() => (this.enrichmentResults()?.length ?? 0) > 0);
+
 
   // Computed title depending on which view is selected
   readonly currentTitle = computed(() => {
@@ -184,5 +191,39 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
     } catch (err) {
       this.notificationService.showError(`${err}`);
     }
+  }
+
+  async runDuoEnrichment(): Promise<void> {
+    this.isEnrichmentLoading.set(true);
+    this.enrichmentError.set(null);
+    try {
+        const recordData = Object.fromEntries(
+        this.annotationService.selectedAssociations(),
+      );
+      const results = await this.configService.analyzeDuoEnrichment(recordData, 10_000);
+      this.enrichmentResults.set(results);
+    } catch (err) {
+      console.error('Duo enrichment analysis failed:', err);
+      this.enrichmentError.set(
+        err instanceof Error ? err.message : 'Enrichment analysis failed'
+      );
+      this.enrichmentResults.set(null);
+    } finally {
+      this.isEnrichmentLoading.set(false);
+    }
+  }
+
+  /** Height percentages for a simple inline pmf bar chart, 0-100 scale. */
+  pmfBarHeights(result: EnrichmentResult): number[] {
+    const max = Math.max(...result.pmf, 1e-9); // avoid divide-by-zero on an all-zero pmf
+    return result.pmf.map((p) => (p / max) * 100);
+  }
+
+  formatPValue(p: number): string {
+    return p < 0.001 ? p.toExponential(2) : p.toFixed(3);
+  }
+
+  isDegenerate(result: DuoEnrichmentSummary): boolean {
+    return result.unweighted?.degenerate ?? result.frequency?.degenerate ?? false;
   }
 }
