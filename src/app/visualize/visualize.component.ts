@@ -137,7 +137,9 @@ export class PhenotypeProfileVisualizerComponent implements OnInit {
       serializer.serializeToString(svgClone);
 
     const dateStamp = new Date().toISOString().split('T')[0];
-    const filenameBase = `hpo_${view}_plot_${dateStamp}`;
+    const plotType = this.activeView(); // overlap, spread, etc.
+    const baseName = this.annotationService.defaultFileName(plotType);
+    const filenameBase = `${baseName}_${dateStamp}`;
 
     try {
       switch (format) {

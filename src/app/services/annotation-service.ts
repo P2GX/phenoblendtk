@@ -61,4 +61,14 @@ export class AnnotationService {
   setObservedHpoCount(count: number): void {
     this._observedHpoCount.set(count);
   }
+
+  // return a filename (basename) such as overlap-FBN1-PTPN11
+  defaultFileName(view: string): string {
+    console.log("all sel", this.allSelectedAssociations());
+    console.log("")
+    const annots = this.allSelectedAssociations();
+    const genes = annots.map(a => {return a.geneSymbol}).join("-");
+    const fname = `${view}-${genes}`
+    return fname;
+  }
 }
