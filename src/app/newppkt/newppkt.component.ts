@@ -5,10 +5,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { from, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ConfigService } from '../services/config-service';
-import { HpoTwostepComponent } from '../util/hpotwostep/hpotwostep.component';
 import { Router } from '@angular/router';
 import { AnnotationService } from '../services/annotation-service';
-
+import { HpoDialogWrapperComponent } from '../util/hpotwostep/hpo-dialog-wrapper.component';
+import {  HpoTwostepData } from 'ng-hpo-uikit';
 
 
 /*
@@ -87,21 +87,24 @@ export class NewCaseComponent {
 
 
   protected openCurationWizard(): void {
-    const dialogRef = this.dialog.open(HpoTwostepComponent, {
+    const dialogData: HpoTwostepData = {
+      mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
+      autocompleteProvider: (query: string) => this.performHpoAutocomplete(query),
+      hierarchyProvider: (termId: string) => this.fetchHpoHierarchy(termId),
+      availableModifiers: () => this.availableModifiers()
+    };
+
+
+    const dialogRef = this.dialog.open(HpoDialogWrapperComponent, {
       width: '85vw',
       maxWidth: '1200px',
       height: '80vh',
       disableClose: true,
-      data: {
-        mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
-        autocompleteProvider: this.performHpoAutocomplete,
-        hierarchyProvider: this.fetchHpoHierarchy,
-        availableModifiers: this.availableModifiers
-      }
+      data: dialogData
     });
     dialogRef.afterClosed().subscribe((polishedAnnotations?: PolishedHpoAnnotation[]) => {
       if (polishedAnnotations) {
-        const observedTerms: PolishedHpoAnnotation[] = polishedAnnotations.filter((annot: { excluded: any; }) => ! annot.excluded);
+        const observedTerms: PolishedHpoAnnotation[] = polishedAnnotations.filter((annot) => ! annot.excluded);
         const termIds = observedTerms.map(t => t.termId);
         this.configService.addObservedHposFromNER(termIds);
         const n_observed = observedTerms.length;

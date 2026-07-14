@@ -45,7 +45,15 @@ export class ConfigService {
   }
 
   async mineClinicalText(text: string): Promise<FenominalSentence[]> {
-    return invoke<FenominalSentence[]>('mine_clinical_text', { text });
+    console.log('[mineClinicalText] invoking mine_clinical_text with text:', text);
+    try {
+      const result = await invoke<FenominalSentence[]>('mine_clinical_text', { text });
+      console.log('[mineClinicalText] received result:', result);
+      return result;
+    } catch (error) {
+      console.error('[mineClinicalText] invoke failed:', error);
+      throw error;
+    }
   }
 
   async checkInitializationStatus(): Promise<InitializationStatusDto> {
