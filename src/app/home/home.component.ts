@@ -10,18 +10,18 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox'
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { MatIcon } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AppStatusService } from '../services/app-status-service';
 import { ConfigService } from '../services/config-service';
+import { IconComponent } from "ngx-phenoprofile";
 
 
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, MatProgressBarModule, FormsModule, LoadOntologyComponent, 
-    MatCheckboxModule, MatIcon, MatProgressSpinnerModule],
+  imports: [CommonModule, MatProgressBarModule, FormsModule, LoadOntologyComponent,
+    MatCheckboxModule, MatProgressSpinnerModule, IconComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })

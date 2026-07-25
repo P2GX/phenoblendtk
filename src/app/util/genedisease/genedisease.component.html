@@ -32,7 +32,7 @@
           <button mat-button (click)="selectAllDiseases(entry.geneSymbol)">Select all</button>
           <button mat-button (click)="clearAllDiseases(entry.geneSymbol)">Clear</button>
           <button mat-icon-button (click)="removeGene(entry.geneSymbol)" aria-label="Remove gene">
-            <mat-icon>close</mat-icon>
+            <app-icon name="close" [size]="20" />
           </button>
         </div>
       </div>

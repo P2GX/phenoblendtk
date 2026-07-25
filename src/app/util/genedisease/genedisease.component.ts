@@ -5,13 +5,13 @@ import { startWith, debounceTime, switchMap, from, of, catchError } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { CommonModule } from '@angular/common';
 import { GeneDiseaseAssociation } from '../../models/interfaces';
 import { AnnotationService } from '../../services/annotation-service';
 import { Router } from '@angular/router';
 import { NotificationService } from 'ng-hpo-uikit';
+import { IconComponent } from "ngx-phenoprofile";
 
 interface GeneEntry {
   geneSymbol: string;
@@ -28,9 +28,9 @@ interface GeneEntry {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule,
-    MatAutocompleteModule
-  ],
+    MatAutocompleteModule,
+    IconComponent
+],
   templateUrl: './genedisease.component.html',
   styleUrls: ['./genedisease.component.scss']
 })

@@ -14,7 +14,7 @@
             <div class="action-with-help">  
             <button (click)="setBiocuratorOrcid()" 
                 class="orcid-btn">
-                    <mat-icon class="scale-75">account_circle</mat-icon>
+                    <app-icon name="account_circle" [size]="20" />
                     {{ biocuratorOrcid() || 'Set ORCID' }}
             </button>
             </div>
