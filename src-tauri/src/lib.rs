@@ -14,7 +14,6 @@ use fenominal::FenominalSentence;
 use ga4ghphetools::dto::hpo_term_dto::HpoTermDuplet;
 use ga4ghphetools::tauri::models::HierarchyMapItem;
 use ontolius::ontology::OntologyTerms;
-use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 use tauri::{AppHandle, Emitter, WindowEvent};
 use std::collections::HashMap;
@@ -163,7 +162,7 @@ async fn add_observed_hpos_from_ner(
 ) -> Result<(), String>{
     let state_handle = state.inner().clone();
     let mut singleton = state_handle.phenoblendtk.lock().map_err(|e| e.to_string())?;
-    singleton.add_observed_hpos_from_ner(observed);
+    singleton.add_observed_hpos_from_ner(observed)?;
     Ok(())
 }
 

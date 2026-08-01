@@ -225,9 +225,9 @@ fn build_final_categories(
             .unwrap_or_else(|| cat_id.to_string());
 
         // Skip organs with no observations in our data
-        let EPS = 1e-8;
+        let epsilon = 1e-8;
         let max_gene_val = gene_values.iter().copied().reduce(f64::max).unwrap_or(0.0);
-        if ppkt_val < EPS && max_gene_val < EPS {
+        if ppkt_val < epsilon && max_gene_val < epsilon {
             continue;
         }
 

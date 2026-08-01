@@ -36,19 +36,10 @@
 }
 
 
-
-
-
-
-
-
 /* Style the text inside the option */
 .mdc-list-item__primary-text {
   font-weight: 400;
 }
-
-
-.edit-dialog .mat-mdc-dialog-container { z-index: 2001 !important; }
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -88,12 +79,6 @@
   padding: var(--dialog-padding);
 }
 
-/* Helper to remove Material's default styling */
-.custom-dialog-panel .mat-mdc-dialog-container .mdc-dialog__surface {
-  padding: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
 
 
 .tool-row {
@@ -155,29 +140,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
-  app-help-button {
-    ::ng-deep {
-      .mat-mdc-icon-button {
-        width: 16px !important;
-        height: 16px !important;
-        padding: 0 !important;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-      }
-      mat-icon {
-        font-size: 14px !important;
-        width: 14px !important;
-        height: 14px !important;
-        margin: 0 !important;
-        color: #94a3b8 !important;
-        opacity: 0.6;
-      }
-    }
-    &:hover mat-icon { opacity: 1; color: #2563eb !important; }
-  }
 }
+
+
 
 
 

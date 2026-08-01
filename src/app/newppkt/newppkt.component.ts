@@ -9,8 +9,6 @@ import { AnnotationService } from '../services/annotation-service';
 import { HpoDialogWrapperComponent } from '../util/hpotwostep/hpo-dialog-wrapper.component';
 import {  HpoTwostepData } from 'ng-hpo-uikit';
 
-
-
 /*
  * This component allows the user to entter HPO data by either choosing a phenopacket or by
  * entering a clinical text and using named-entity recognition (NER)/text-mining to
@@ -98,7 +96,6 @@ export class NewCaseComponent {
 
   onHpoDialogResult(polishedAnnotations?: PolishedHpoAnnotation[]): void {
     this.showHpoTwoStepDialog.set(false);
-    //this.hpoDialogData.set(null);
     if (polishedAnnotations) {
       const observedTerms: PolishedHpoAnnotation[] = polishedAnnotations.filter((annot) => ! annot.excluded);
        const termIds = observedTerms.map(t => t.termId);
@@ -111,10 +108,6 @@ export class NewCaseComponent {
        } 
     }
   }
-
-
-
-
 
 
   private proceedToNextWindow(observedHpoCount: number): void {

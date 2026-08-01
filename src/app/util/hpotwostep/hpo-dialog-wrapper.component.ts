@@ -14,7 +14,7 @@ import { HpoTwostepMiningComponent, NotificationService, HpoTwostepData, Polishe
   standalone: true,
   imports: [HpoTwostepMiningComponent],
   template: `
-    <dialog #dialogEl class="hpo-dialog-wrapper" (close)="onNativeClose()">
+    <dialog #dialogEl class="hpo-mining-dialog" (close)="onNativeClose()">
       <lib-hpo-twostep-mining
         [config]="dialogData()"
         (curationComplete)="onComplete($event)"

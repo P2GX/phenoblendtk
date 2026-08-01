@@ -37,6 +37,8 @@ export class GeneDiseaseComponent {
     this.geneEntries().filter(e => e.selectedDiseaseIds.size > 0).length
   );
 
+  
+
   protected readonly canProceed = computed(() => this.genesWithSelections() >= 2);
 
   private searchResults = toSignal(

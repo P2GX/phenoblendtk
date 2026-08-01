@@ -1,8 +1,6 @@
 use std::{collections::{HashMap, HashSet},  sync::Arc};
 
 use ontolius::{TermId, ontology::{HierarchyQueries, OntologyTerms, csr::FullCsrOntology}, term::MinimalTerm};
-use ontolius::ontology::HierarchyWalks;
-use tokio::fs::create_dir;
 use crate::{blend::dto::{OverlapPlotItem, OverlapPlotPayload, SpreadPlotPayload, UpsetPlotPayload}, hpoa::disease_model::GeneDiseaseAssociation, model::{proband::Proband, simple_term::SimpleOntologyTerm}};
 use log::{trace, debug, info, warn, error};
 
