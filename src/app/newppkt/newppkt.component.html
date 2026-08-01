@@ -46,3 +46,10 @@
     }
   </div>
 </div>
+
+@if (showHpoTwoStepDialog()) {
+  <app-hpo-dialog-wrapper
+    [dialogData]="hpoDialogData!"
+    (result)="onHpoDialogResult($event)"
+  ></app-hpo-dialog-wrapper>
+}

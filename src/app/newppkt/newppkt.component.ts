@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HierarchyMapItem, HpoTermMinimal, NotificationService, OntologyMatch, PhenopacketLoaderComponent, PolishedHpoAnnotation } from 'ng-hpo-uikit';
-import { MatDialog } from '@angular/material/dialog';
 import { from, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ConfigService } from '../services/config-service';
@@ -9,6 +8,7 @@ import { Router } from '@angular/router';
 import { AnnotationService } from '../services/annotation-service';
 import { HpoDialogWrapperComponent } from '../util/hpotwostep/hpo-dialog-wrapper.component';
 import {  HpoTwostepData } from 'ng-hpo-uikit';
+
 
 
 /*
@@ -20,7 +20,7 @@ import {  HpoTwostepData } from 'ng-hpo-uikit';
 @Component({
   selector: 'app-new-case',
   standalone: true,
-  imports: [CommonModule, PhenopacketLoaderComponent],
+  imports: [CommonModule, PhenopacketLoaderComponent, HpoDialogWrapperComponent],
   templateUrl: './newppkt.component.html',
   styleUrls: ['./newppkt.component.scss']
 })
@@ -34,7 +34,6 @@ export class NewCaseComponent {
 
   private configService = inject(ConfigService);
   private notificationService = inject(NotificationService);
-  private dialog = inject(MatDialog);
   private annotationService = inject(AnnotationService);
   protected hierarchyCache = signal<Record<string, HierarchyMapItem>>({});
 
@@ -84,41 +83,34 @@ export class NewCaseComponent {
     });
   };
 
-
+  showHpoTwoStepDialog = signal(false);
+  protected hpoDialogData?: HpoTwostepData;
 
   protected openCurationWizard(): void {
-    const dialogData: HpoTwostepData = {
+    this.hpoDialogData = {
       mineTextProvider: (text: string) => this.configService.mineClinicalText(text),
       autocompleteProvider: (query: string) => this.performHpoAutocomplete(query),
       hierarchyProvider: (termId: string) => this.fetchHpoHierarchy(termId),
       availableModifiers: () => this.availableModifiers()
     };
+    this.showHpoTwoStepDialog.set(true);
+  }
 
-
-    const dialogRef = this.dialog.open(HpoDialogWrapperComponent, {
-      width: '85vw',
-      maxWidth: '1200px',
-      height: '80vh',
-      disableClose: true,
-      data: dialogData
-    });
-    dialogRef.afterClosed().subscribe((polishedAnnotations?: PolishedHpoAnnotation[]) => {
-      if (polishedAnnotations) {
-        const observedTerms: PolishedHpoAnnotation[] = polishedAnnotations.filter((annot) => ! annot.excluded);
-        const termIds = observedTerms.map(t => t.termId);
-        this.configService.addObservedHposFromNER(termIds);
+  onHpoDialogResult(polishedAnnotations?: PolishedHpoAnnotation[]): void {
+    this.showHpoTwoStepDialog.set(false);
+    //this.hpoDialogData.set(null);
+    if (polishedAnnotations) {
+      const observedTerms: PolishedHpoAnnotation[] = polishedAnnotations.filter((annot) => ! annot.excluded);
+       const termIds = observedTerms.map(t => t.termId);
+         this.configService.addObservedHposFromNER(termIds);
         const n_observed = observedTerms.length;
        if (n_observed > 0) {
         this.proceedToNextWindow(n_observed);
        } else {
           this.notificationService.showError(`Extracted ${polishedAnnotations.length} phenotype annotations but no observed HPOs!`)
-       }
-      } else {
-        this.notificationService.showError("Could not extract phenotype annotations!")
-      }
-    });
+       } 
+    }
   }
-
 
 
 

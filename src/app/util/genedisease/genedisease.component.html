@@ -1,24 +1,44 @@
 <div class="genedisease-workspace">
   <h1>Genes and associated diseases</h1>
 
-  <mat-form-field appearance="outline" class="gene-search-field">
-    <mat-label>Search gene symbol</mat-label>
-    <input
-      matInput
-      [formControl]="control"
-      [matAutocomplete]="auto"
-      placeholder="e.g. LZTR1"
-      spellcheck="false"
-      autocomplete="off">
+  <div class="gene-search-field">
+    <label for="geneSearchInput" class="gene-search-label">Search gene symbol</label>
+    <div class="combobox-wrapper">
+      <input
+        #geneInput
+        id="geneSearchInput"
+        type="text"
+        [formControl]="control"
+        placeholder="e.g. LZTR1"
+        spellcheck="false"
+        autocomplete="off"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-haspopup="listbox"
+        [attr.aria-expanded]="isOpen()"
+        (focus)="onFocus()"
+        (input)="onInput()"
+        (blur)="onBlur()"
+        (keydown)="onKeyDown($event)">
 
-    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onGeneSelected($event)">
-      @for (symbol of geneSymbolOptions(); track symbol) {
-        <mat-option [value]="symbol">{{ symbol }}</mat-option>
-      } @empty {
-        <mat-option disabled>No matching genes</mat-option>
+      @if (isOpen()) {
+        <ul class="gene-options-list" role="listbox">
+          @for (symbol of geneSymbolOptions(); track symbol; let i = $index) {
+            <li
+              role="option"
+              class="gene-option"
+              [class.highlighted]="i === highlightedIndex()"
+              [attr.aria-selected]="i === highlightedIndex()"
+              (mousedown)="selectGene(symbol); $event.preventDefault()">
+              {{ symbol }}
+            </li>
+          } @empty {
+            <li class="gene-option-empty">No matching genes</li>
+          }
+        </ul>
       }
-    </mat-autocomplete>
-  </mat-form-field>
+    </div>
+  </div>
 
   @if (geneEntries().length === 0) {
     <p class="empty-state">No genes added yet. Search above to add one.</p>
@@ -29,9 +49,9 @@
       <div class="gene-entry-header">
         <h2>{{ entry.geneSymbol }}</h2>
         <div class="gene-entry-actions">
-          <button mat-button (click)="selectAllDiseases(entry.geneSymbol)">Select all</button>
-          <button mat-button (click)="clearAllDiseases(entry.geneSymbol)">Clear</button>
-          <button mat-icon-button (click)="removeGene(entry.geneSymbol)" aria-label="Remove gene">
+          <button class="btn-text" (click)="selectAllDiseases(entry.geneSymbol)">Select all</button>
+          <button class="btn-text" (click)="clearAllDiseases(entry.geneSymbol)">Clear</button>
+          <button class="btn-icon" (click)="removeGene(entry.geneSymbol)" aria-label="Remove gene">
             <app-icon name="close" [size]="20" />
           </button>
         </div>
@@ -56,6 +76,7 @@
       </ul>
     </div>
   }
+
   <div class="workspace-footer">
     <p class="gene-count-hint">
       @if (genesWithSelections() < 2) {
@@ -66,7 +87,6 @@
     </p>
     <button
       class="btn-outline-primary"
-      color="primary"
       [disabled]="!canProceed()"
       (click)="goToVisualization()">
       Next: Visualize

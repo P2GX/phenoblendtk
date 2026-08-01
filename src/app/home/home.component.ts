@@ -1,36 +1,29 @@
-import { Component, computed, inject, NgZone, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 
 import { Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
-import { OrcidDialogComponent, NotificationService } from 'ng-hpo-uikit';
-import { LoadOntologyComponent } from 'ng-hpo-uikit';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { LoadOntologyComponent, NotificationService } from 'ng-hpo-uikit';
+
 import { FormsModule } from '@angular/forms';
-import { MatCheckboxModule } from '@angular/material/checkbox'
-import { openUrl } from '@tauri-apps/plugin-opener';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+
 import { AppStatusService } from '../services/app-status-service';
 import { ConfigService } from '../services/config-service';
-import { IconComponent } from "ngx-phenoprofile";
 
 
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, MatProgressBarModule, FormsModule, LoadOntologyComponent,
-    MatCheckboxModule, MatProgressSpinnerModule, IconComponent],
+  imports: [CommonModule, FormsModule, LoadOntologyComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
 
 
-
   private router= inject(Router);
-  private dialog = inject(MatDialog);
   private notificationService = inject(NotificationService);
   public statusService = inject(AppStatusService);
   private configService = inject(ConfigService);
@@ -128,41 +121,6 @@ export class HomeComponent {
     }
 
     console.log("function finished");
-  }
-
-  
-
-
-
-  setBiocuratorOrcid(): void {
-    const dialogRef = this.dialog.open(OrcidDialogComponent, {
-      width: '500px',
-      disableClose: true, 
-      data: { 
-        currentOrcid: this.biocuratorOrcid()
-      }
-    });
-
-    // this subscribes to the @output/emit of the dialog and opens
-    // the ORCID website in the system browser
-    dialogRef.componentInstance.externalLinkClicked.subscribe((url: string) => {
-      this.handleExternalNavigation(url);
-    });
-
-    dialogRef.afterClosed().subscribe((result: string | undefined) => {
-      if (!result) {
-        this.notificationService.showWarning("Unable to set the curator ORCID.");
-        return;
-      }
-
-      this.biocuratorOrcid.set(result);
-      this.notificationService.showSuccess(`Set curator ORCID to ${result}.`);
-    });
-  }
-
-  // launch the link in the user's default browser
-  private async handleExternalNavigation(url: string): Promise<void> {
-    await openUrl(url);
   }
 
 

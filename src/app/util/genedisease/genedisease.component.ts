@@ -1,12 +1,7 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ElementRef, viewChild } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { startWith, debounceTime, switchMap, from, of, catchError } from 'rxjs';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { CommonModule } from '@angular/common';
 import { GeneDiseaseAssociation } from '../../models/interfaces';
 import { AnnotationService } from '../../services/annotation-service';
 import { Router } from '@angular/router';
@@ -22,15 +17,7 @@ interface GeneEntry {
 @Component({
   selector: 'genedisease',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatAutocompleteModule,
-    IconComponent
-],
+  imports: [ReactiveFormsModule, IconComponent],
   templateUrl: './genedisease.component.html',
   styleUrls: ['./genedisease.component.scss']
 })
@@ -40,6 +27,11 @@ export class GeneDiseaseComponent {
   private readonly notificationService = inject(NotificationService);
 
   protected control = new FormControl<string>('', { nonNullable: true });
+
+  // Combobox open/close + keyboard-highlight state — replaces mat-autocomplete's internal panel state.
+  protected isOpen = signal(false);
+  protected highlightedIndex = signal(-1);
+  private inputEl = viewChild.required<ElementRef<HTMLInputElement>>('geneInput');
 
   protected readonly genesWithSelections = computed(() =>
     this.geneEntries().filter(e => e.selectedDiseaseIds.size > 0).length
@@ -83,10 +75,57 @@ export class GeneDiseaseComponent {
 
   protected geneEntries = signal<GeneEntry[]>([]);
 
-  protected onGeneSelected(event: MatAutocompleteSelectedEvent): void {
-    const geneSymbol = event.option.value as string;
+  protected onFocus(): void {
+    this.isOpen.set(true);
+  }
+
+  protected onInput(): void {
+    this.isOpen.set(true);
+    this.highlightedIndex.set(-1);
+  }
+
+  protected onBlur(): void {
+    // Deferred so a (mousedown) selection on an option fires first — see template comment.
+    this.isOpen.set(false);
+    this.highlightedIndex.set(-1);
+  }
+
+  protected onKeyDown(event: KeyboardEvent): void {
+    const options = this.geneSymbolOptions();
+    if (!options.length) return;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.isOpen.set(true);
+        this.highlightedIndex.update(i => (i + 1) % options.length);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.isOpen.set(true);
+        this.highlightedIndex.update(i => (i - 1 + options.length) % options.length);
+        break;
+      case 'Enter': {
+        const idx = this.highlightedIndex();
+        if (idx >= 0 && idx < options.length) {
+          event.preventDefault();
+          this.selectGene(options[idx]);
+        }
+        break;
+      }
+      case 'Escape':
+        this.isOpen.set(false);
+        this.highlightedIndex.set(-1);
+        break;
+    }
+  }
+
+  protected selectGene(geneSymbol: string): void {
     this.addGene(geneSymbol);
     this.control.setValue('');
+    this.isOpen.set(false);
+    this.highlightedIndex.set(-1);
+    this.inputEl().nativeElement.focus();
   }
 
   private addGene(geneSymbol: string): void {
@@ -137,7 +176,7 @@ export class GeneDiseaseComponent {
     this.geneEntries.update(entries => entries.filter(e => e.geneSymbol !== geneSymbol));
   }
 
-   protected readonly hasAnySelection = computed(() =>
+  protected readonly hasAnySelection = computed(() =>
     this.geneEntries().some(e => e.selectedDiseaseIds.size > 0)
   );
 
@@ -154,5 +193,4 @@ export class GeneDiseaseComponent {
     this.annotationService.setSelectedAssociations(byGene);
     this.router.navigate(['/visualize']);
   }
-
 }

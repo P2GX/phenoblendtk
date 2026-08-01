@@ -4,19 +4,11 @@ import { StatusDto, defaultStatusDto } from '../models/status_dto';
 import { invoke } from '@tauri-apps/api/core';
 import { ask } from '@tauri-apps/plugin-dialog';
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { NotificationService } from 'ng-hpo-uikit';
+import { NotificationService, OntologyLoadEvent } from 'ng-hpo-uikit';
 import { WritableSignal } from '@angular/core';
 import { InitializationStatusDto } from '../models/status_dto'; 
 
-// Corresponds to OntologyLoadEvent in ga4ghphetools
-interface OntologyLoadEvent {
-    status: 'loading' | 'success' | 'error' | 'cancel';
-    payload?: {
-      statusMessage?: string;
-      termCount?: number;
-      errorMessage?: string;
-    };
-  }
+
 
 
 @Injectable({ providedIn: 'root' })
@@ -109,7 +101,7 @@ private async registerOntologyListener(config: {
         case 'success':
           config.loadingSignal.set(false);
           config.loadedSignal.set(true);
-          const versionInfo = payload?.statusMessage || 'Loaded';
+          const versionInfo = payload?.version || 'n/a';
           const totalTerms = payload?.termCount ?? 0;
           config.countSignal.set(totalTerms);
           config.versionSignal.set(versionInfo);

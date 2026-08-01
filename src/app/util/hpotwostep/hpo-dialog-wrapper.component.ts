@@ -1,27 +1,60 @@
-import { Component, inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { HpoTwostepMiningComponent , NotificationService, HpoTwostepData} from 'ng-hpo-uikit';
-
-
-
+import {
+  Component,
+  ElementRef,
+  inject,
+  input,
+  output,
+  viewChild,
+  afterNextRender,
+} from '@angular/core';
+import { HpoTwostepMiningComponent, NotificationService, HpoTwostepData, PolishedHpoAnnotation } from 'ng-hpo-uikit';
 
 @Component({
   selector: 'app-hpo-dialog-wrapper',
   standalone: true,
   imports: [HpoTwostepMiningComponent],
   template: `
-    <lib-hpo-twostep-mining
-      [config]="dialogData"
-      (curationComplete)="dialogRef.close($event)"
-      (cancelled)="dialogRef.close()"
-      (errorOccurred)="handleError($event)">
-    </lib-hpo-twostep-mining>
-  `
+    <dialog #dialogEl class="hpo-dialog-wrapper" (close)="onNativeClose()">
+      <lib-hpo-twostep-mining
+        [config]="dialogData()"
+        (curationComplete)="onComplete($event)"
+        (cancelled)="onCancelled()"
+        (errorOccurred)="handleError($event)">
+      </lib-hpo-twostep-mining>
+    </dialog>
+  `,
+  styleUrl: './hpo-dialog-wrapper.component.scss',
 })
 export class HpoDialogWrapperComponent {
-  protected readonly dialogRef = inject(MatDialogRef<HpoDialogWrapperComponent>);
-  protected readonly dialogData = inject<HpoTwostepData>(MAT_DIALOG_DATA);
-  private notificationService = inject(NotificationService);
+  readonly dialogData = input.required<HpoTwostepData>();
+  readonly result = output<PolishedHpoAnnotation[] | undefined>();
+
+  private readonly notificationService = inject(NotificationService);
+  private readonly dialogEl = viewChild.required<ElementRef<HTMLDialogElement>>('dialogEl');
+  private closedByUs = false;
+
+  constructor() {
+    afterNextRender(() => this.dialogEl().nativeElement.showModal());
+  }
+
+  onComplete(data: PolishedHpoAnnotation[]) {
+    this.closedByUs = true;
+    this.result.emit(data);
+    this.dialogEl().nativeElement.close();
+  }
+
+  onCancelled() {
+    this.closedByUs = true;
+    this.result.emit(undefined);
+    this.dialogEl().nativeElement.close();
+  }
+
+  /** Catches Esc-key / backdrop dismissal that bypasses onComplete/onCancelled */
+  onNativeClose() {
+    if (!this.closedByUs) {
+      this.result.emit(undefined);
+    }
+  }
 
   handleError(msg: string) {
     this.notificationService.showError(msg);
