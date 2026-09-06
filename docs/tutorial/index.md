@@ -10,7 +10,7 @@ Phenoblend is a desktop application that can be run on Mac, Windows, or several 
 
 - [Installation](../guides/installation.md)
 - [Loading HPO/HPOA data](data.md)
-- [Loading phenotype/genotype data](phenotype.md)
+- [Loading input data]( input.md)
 - [Visualizations](visualizations.md)
 - [Understanding the overlap plot](overlap.md)
 - [Understanding the upset plot](upset.md)
