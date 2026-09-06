@@ -6,3 +6,4 @@ src-tauri/gen/
 .vscode/
 .angular
 dist/
+docs/.vitepress/cache/

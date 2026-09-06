@@ -15,7 +15,17 @@ export default defineConfig({
         text: 'Getting Started',
         items: [
           { text: 'Installation & Setup', link: '/guides/installation' },
-          { text: 'Developers', link: '/guides/developers' },
+          { text: 'Tutorial', link: '/tutorial/index',
+            items: [
+          { text: 'HPO(A) Data', link: '/tutorial/data' },
+          { text: 'Input data', link: '/tutorial/input' },
+          { text: 'Visualizing data', link: '/tutorial/visualizations' },
+          { text: 'Overlap plot', link: '/tutorial/overlap' },
+          { text: 'Upset plot', link: '/tutorial/upset' },
+          { text: 'Phenotypic profile plot', link: '/tutorial/profile' },
+        
+        ]
+           },
         
         ]
       }

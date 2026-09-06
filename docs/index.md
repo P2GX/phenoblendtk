@@ -10,8 +10,8 @@ hero:
       text: Get Started
       link: /guides/installation
     - theme: alt
-      text: View Components
-      link: /components/orcid-dialog
+      text: Tutorial
+      link: /tutorial/index
 
 features:
   - title: Standalone Architecture
